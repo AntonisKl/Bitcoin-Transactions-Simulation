@@ -4,7 +4,7 @@
 #include "../utils/utils.h"
 
 typedef struct Transaction {
-    char *senderWalletId, receiverWalletId, datetimeS;
+    char *senderWalletId, *receiverWalletId, *datetimeS;
     time_t timestamp;  // millis or sec??
     int amount;
 } Transaction;

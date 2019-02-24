@@ -5,13 +5,13 @@
 Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char* datetimeS) {
     Transaction* transaction = malloc(sizeof(Transaction));
 
-    transaction->senderWalletId = malloc(MAX_WALLET_ID_SIZE);
+    transaction->senderWalletId = (char*)malloc(MAX_WALLET_ID_SIZE);
     strcpy(transaction->senderWalletId, senderWalletId);
 
-    transaction->receiverWalletId = malloc(MAX_WALLET_ID_SIZE);
+    transaction->receiverWalletId = (char*)malloc(MAX_WALLET_ID_SIZE);
     strcpy(transaction->receiverWalletId, receiverWalletId);
 
-    transaction->datetimeS = malloc(MAX_DATETIME_SIZE);
+    transaction->datetimeS = (char*)malloc(MAX_DATETIME_SIZE);
     strcpy(transaction->datetimeS, datetimeS);
 
     struct tm timeStruct;
@@ -82,7 +82,7 @@ void freeBucketRec(HashTable* hashTable, Bucket** bucket) {
 
     freeBucketRec(hashTable, &((*bucket)->nextBucket));
 
-    freeTransactionArray((*bucket)->transactions, hashTable->bucketSize);
+    freeTransactionArray(&(*bucket)->transactions, hashTable->bucketSize);
 
     // free((*bucket)->name);
     // (*bucket)->name = NULL;
@@ -135,7 +135,7 @@ void freeBucketList(HashTable* hashTable, BucketList** bucketList) {
         return;
     // Bucket* curBucket = (*bucketList)->firstBucket;
 
-    freeBucketRec(hashTable, (*bucketList)->firstBucket);
+    freeBucketRec(hashTable, &(*bucketList)->firstBucket);
 
     // while (curBucket != NULL) {
     //     // free(curBucket->name);
@@ -270,7 +270,6 @@ Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int maxTrans
 
 //////////////////////////////////////////////////////////////////////////////// END OF BUCKET LIST ///////////////////////////////////////////////////////////////
 
-
 //////////////////////////////////////////////////////////////////////////////// START OF HASH TABLE ///////////////////////////////////////////////////////////////
 
 HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSize) {
@@ -287,7 +286,7 @@ unsigned int hashFunction(HashTable* hashTable, char* walletId) {
     unsigned long hash = 5381;
     int c;
 
-    while (c = *walletId++)
+    while ((c = *(walletId++)))
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash % hashTable->bucketListArraySize;

@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS  = -g -Wall
 RM = rm -rf
 
-default: mirr
+default: bitcoin
 
 bitcoin:  bitcoin.o tree.o hashtable.o utils.o
 	$(CC) $(CFLAGS) -o executables/bitcoin bitcoin.o tree.o hashtable.o utils.o
@@ -20,4 +20,4 @@ utils.o:  utils/utils.c
 	$(CC) $(CFLAGS) -c utils/utils.c
 
 clean: 
-	$(RM) mirr *.o executables/*
+	$(RM) bitcoin *.o executables/*

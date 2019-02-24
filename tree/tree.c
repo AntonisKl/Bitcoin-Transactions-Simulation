@@ -21,8 +21,8 @@ void freeTreeNodeRec(TreeNode** treeNode) {
     if (treeNode == NULL)
         return;
 
-    freeTreeNodeRec((*treeNode)->receiverNode);
-    freeTreeNodeRec((*treeNode)->remainingNode);
+    freeTreeNodeRec(&(*treeNode)->receiverNode);
+    freeTreeNodeRec(&(*treeNode)->remainingNode);
 
     free((*treeNode)->walletId);
     (*treeNode)->walletId = NULL;
@@ -36,11 +36,11 @@ void freeTree(Tree* tree) {
     if (tree == NULL)
         return;
 
-    freeTreeNodeRec(tree->rootNode);
+    freeTreeNodeRec(&tree->rootNode);
 }
 
 TreeNode* findTreeNodeOfTree(char* walletId, int amount, TreeNode* nextTreeNode /*= rootNode initially*/) {
-    if (nextTreeNode == NULL || (strcmp(nextTreeNode->walletId) == 0 && nextTreeNode->amount == amount))
+    if (nextTreeNode == NULL || (strcmp(nextTreeNode->walletId, walletId) == 0 && nextTreeNode->amount == amount))
         return nextTreeNode;
 
     return findTreeNodeOfTree(walletId, amount, nextTreeNode->receiverNode);
