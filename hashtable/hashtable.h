@@ -2,9 +2,11 @@
 #define HASHTABLE_H
 
 #include "../utils/utils.h"
+#include "../bitcoin_tree_list/bitcoin_tree_list.h"
 
 typedef struct Transaction {
     char *senderWalletId, *receiverWalletId, *datetimeS;
+    BitcoinList* bitcoinList;
     time_t timestamp;  // millis or sec??
     int amount;
 } Transaction;

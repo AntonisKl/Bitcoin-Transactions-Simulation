@@ -2,7 +2,7 @@
 
 //////////////////////////////////////////////////////////////////////////////// START OF TRANSACTION ///////////////////////////////////////////////////////////////
 
-Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char* datetimeS) {
+Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList) {  // bitcoinList will be already initialized
     Transaction* transaction = malloc(sizeof(Transaction));
 
     transaction->senderWalletId = (char*)malloc(MAX_WALLET_ID_SIZE);
@@ -24,6 +24,9 @@ Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char*
 
     transaction->timestamp = timestamp;
 
+    // transaction->bitcoinList = initBitcoinList();
+    transaction->bitcoinList = bitcoinList;
+
     return transaction;
 }
 
@@ -34,6 +37,9 @@ void freeTransaction(Transaction** transaction) {
     (*transaction)->receiverWalletId = NULL;
     free((*transaction)->datetimeS);
     (*transaction)->datetimeS = NULL;
+    freeBitcoinList(&(*transaction)->bitcoinList);
+    (*transaction)->bitcoinList = NULL;
+
     free((*transaction));
     (*transaction) = NULL;
 
@@ -98,7 +104,8 @@ Transaction* addTransactionToBucketList(HashTable* hashTable, unsigned int listI
         lastBucket = addBucketToEndOfBucketList(hashTable->bucketLists[listIndex], hashTable->bucketSize);  // maybe add transaction with index of bucketList
     }
 
-    lastBucket->transactions[lastBucket->nextIndex] = initTransaction(transaction->senderWalletId, transaction->receiverWalletId, transaction->datetimeS);
+    // lastBucket->transactions[lastBucket->nextIndex] = initTransaction(transaction->senderWalletId, transaction->receiverWalletId, transaction->datetimeS);
+    lastBucket->transactions[lastBucket->nextIndex] = transaction;  // by pointer
     lastBucket->nextIndex++;
 
     return lastBucket->transactions[lastBucket->nextIndex - 1];

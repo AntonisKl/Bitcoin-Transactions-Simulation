@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "tree.h": "c",
+        "bitcoin_tree&list.h": "c",
+        "bitcoin_tree_list.h": "c"
+    }
+}
