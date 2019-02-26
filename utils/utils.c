@@ -116,7 +116,7 @@ Wallet* findWalletInWalletList(WalletList* walletList, char* walletId) {
     return NULL;
 }
 
-Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned int balance) {
+Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned int balance, BitcoinList* bitcoinList) {
     if (walletList->size == 0) {
         walletList->firstWallet = initWallet(balance);
 
