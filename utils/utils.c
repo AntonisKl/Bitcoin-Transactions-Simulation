@@ -1,11 +1,31 @@
 #include "utils.h"
 
+#include "../bitcoin_tree_list/bitcoin_tree_list.h"
+
 WalletList* initWalletList() {
     WalletList* walletList = (WalletList*)malloc(sizeof(WalletList));
     walletList->size = 0;
     walletList->firstWallet = NULL;
 
     return walletList;
+}
+
+Wallet* initWallet(char* walletId, unsigned int balance, BitcoinList* bitcoinList) {
+    Wallet* wallet = (Wallet*)malloc(sizeof(Wallet));
+
+    wallet->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+    wallet->bitcoinList = bitcoinList;
+    wallet->nextWallet = NULL;
+
+    return wallet;
+}
+
+void freeWallet(Wallet** wallet) {
+    free((*wallet)->walletId);
+    (*wallet)->walletId = NULL;
+
+    freeBitcoinList(&(*wallet)->bitcoinList);
+    (*wallet)->nextWallet = NULL;
 }
 
 // Wallet* initWallet(char* name) {
@@ -57,7 +77,7 @@ void freeWalletRec(Wallet** wallet) {
     freeWalletRec(&((*wallet)->nextWallet));
 
     // freeTransactionArray(&(*bucket)->transactions, hashTable->bucketSize);
-    freeWallet((*wallet));
+    freeWallet(&(*wallet));
 
     free((*wallet)->walletId);
     (*wallet)->walletId = NULL;
@@ -88,7 +108,7 @@ Wallet* findWalletInWalletList(WalletList* walletList, char* walletId) {
     while (curWallet != NULL) {
         if (strcmp(curWallet->walletId, walletId) == 0) {
             return curWallet;
-        } else if (strcmp(curWallet->walletId, walletId) < 0) {  // no need for searching further since the list is sorted
+        } else if (strcmp(walletId, curWallet->walletId) < 0) {  // no need for searching further since the list is sorted
             return NULL;
         }
         curWallet = curWallet->nextWallet;
@@ -101,42 +121,42 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
         walletList->firstWallet = initWallet(balance);
 
         walletList->size++;
-        printf("Inserted |%d| to WalletList\n\n", bitcoinId);
+        printf("Inserted |%s| to WalletList\n\n", walletId);
         return walletList->firstWallet;
     } else {
         Wallet* curWallet = walletList->firstWallet;
 
-        if (strcmp(curWallet->walletId, bitcoinId) < 0) {
+        if (strcmp(walletId, curWallet->walletId) < 0) {
             // insert at start
-            Wallet* walletToInsert = initWallet(startAmount);
+            Wallet* walletToInsert = initWallet(balance);
             walletToInsert->nextWallet = curWallet;
 
             // curWallet->prevNode = walletToInsert;
             walletList->firstWallet = walletToInsert;
             walletList->size++;
-            printf("Inserted |%d| to WalletList\n\n", bitcoinId);
+            printf("Inserted |%s| to WalletList\n\n", walletId);
             return walletList->firstWallet;
         }
         while (curWallet != NULL) {
             if (curWallet->nextWallet != NULL) {
-                if (strcmp(curWallet->walletId, bitcoinId) < 0) {
-                    Wallet* walletToInsert = initWallet(startAmount);
+                if (strcmp(walletId, curWallet->nextWallet->walletId) < 0) {
+                    Wallet* walletToInsert = initWallet(balance);
                     // walletToInsert->prevNode = curWallet;
                     walletToInsert->nextWallet = curWallet->nextWallet;
 
                     // curWallet->nextNode->prevNode = walletToInsert;
                     curWallet->nextWallet = walletToInsert;
                     walletList->size++;
-                    printf("Inserted |%d| to WalletList\n\n", bitcoinId);
+                    printf("Inserted |%s| to WalletList\n\n", walletId);
                     return curWallet->nextWallet;
                 }
             } else {
                 // insert at the end
-                curWallet->nextWallet = initWallet(startAmount);
+                curWallet->nextWallet = initWallet(balance);
                 // curWallet->nextNode->prevNode = curWallet;
 
                 walletList->size++;
-                printf("Inserted |%d| to WalletList\n\n", bitcoinId);
+                printf("Inserted |%s| to WalletList\n\n", walletId);
                 return curWallet->nextWallet;
             }
 

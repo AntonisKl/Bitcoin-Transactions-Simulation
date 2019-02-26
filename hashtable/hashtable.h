@@ -30,7 +30,7 @@ typedef struct HashTable {
 } HashTable;
 
 // Transaction
-Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char* datetimeS);
+Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList);
 
 void freeTransaction(Transaction** transaction);
 

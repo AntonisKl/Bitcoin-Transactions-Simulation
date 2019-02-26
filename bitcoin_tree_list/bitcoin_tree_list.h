@@ -3,23 +3,23 @@
 
 #include "../utils/utils.h"
 
-typedef struct BitcoinTreeNode {
-    char* walletId;
-    int amount;
-    struct BitcoinTreeNode *receiverNode, *remainingNode;  // remainingNode may be NULL if remaining amount is 0
-} BitcoinTreeNode;
+// typedef struct BitcoinTreeNode {
+//     char* walletId;
+//     int amount;
+//     struct BitcoinTreeNode *receiverNode, *remainingNode;  // remainingNode may be NULL if remaining amount is 0
+// } BitcoinTreeNode;
 
-typedef struct BitcoinTree {
-    BitcoinTreeNode* rootNode;
-    int bitcoinId;
-    unsigned int size;
-    struct BitcoinTree* nextBitcoinTree;
-} BitcoinTree;
+// typedef struct BitcoinTree {
+//     BitcoinTreeNode* rootNode;
+//     int bitcoinId;
+//     unsigned int size;
+//     struct BitcoinTree* nextBitcoinTree;
+// } BitcoinTree;
 
-typedef struct BitcoinList {
-    BitcoinTree *firstBitcoinTree;
-    unsigned int size;
-} BitcoinList;
+// typedef struct BitcoinList {
+//     BitcoinTree *firstBitcoinTree;
+//     unsigned int size;
+// } BitcoinList;
 
 BitcoinTree* initBitcoinTree();
 
