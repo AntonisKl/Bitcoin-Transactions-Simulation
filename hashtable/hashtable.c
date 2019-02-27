@@ -46,40 +46,163 @@ void freeTransaction(Transaction** transaction) {
     return;
 }
 
-Transaction** initTransactionArray(unsigned int size) {
-    Transaction** transactions = (Transaction**)malloc(size * sizeof(Transaction*));
-    for (int i = 0; i < size; i++) {
-        transactions[i] = NULL;
-    }
+void freeTransactionRec(Transaction** transaction) {
+    if ((*transaction) == NULL)
+        return;
 
-    return transactions;
-}
+    freeTransactionRec(&((*transaction)->nextTransaction));
 
-void freeTransactionArray(Transaction*** transactions, unsigned int size) {
-    for (int i = 0; i < size; i++) {
-        if ((*transactions[i]) != NULL)
-            freeTransaction(transactions[i]);
-    }
-
-    free((*transactions));
-    (*transactions) = NULL;
+    // free((*bucket)->name);
+    // (*bucket)->name = NULL;
+    freeTransaction(transaction);
     return;
 }
 
+// Transaction** initTransactionArray(unsigned int size) {
+//     Transaction** transactions = (Transaction**)malloc(size * sizeof(Transaction*));
+//     for (int i = 0; i < size; i++) {
+//         transactions[i] = NULL;
+//     }
+
+//     return transactions;
+// }
+
+// void freeTransactionArray(Transaction*** transactions, unsigned int size) {
+//     for (int i = 0; i < size; i++) {
+//         if ((*transactions[i]) != NULL)
+//             freeTransaction(transactions[i]);
+//     }
+
+//     free((*transactions));
+//     (*transactions) = NULL;
+//     return;
+// }
+
 //////////////////////////////////////////////////////////////////////////////// END OF TRANSACTION ///////////////////////////////////////////////////////////////
+
+TransactionList* initTransactionList(char* walletId) {
+    TransactionList* transactionList = (TransactionList*)malloc(sizeof(TransactionList));
+    transactionList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+    strcpy(transactionList->walletId, walletId);
+
+    transactionList->size = 0;
+
+    transactionList->firstTransaction = NULL;
+    transactionList->lastTransaction = NULL;
+
+    return transactionList;
+}
+
+TransactionList** initTransactionListArray(unsigned int size) {
+    TransactionList** transactionLists = (TransactionList**)malloc(size * sizeof(TransactionList*));
+
+    for (int i = 0; i < size; i++) {
+        transactionLists[i] = NULL;
+    }
+
+    return transactionLists;
+}
+
+void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size) {
+    for (int i = 0; i < size; i++) {
+        if ((*transactionLists)[i] != NULL) {
+            freeTransactionList(&(*transactionLists)[i]);
+        }
+    }
+
+    free(*transactionLists);
+    (*transactionLists) = NULL;
+
+    return;
+}
+
+void freeTransactionList(TransactionList** transactionList) {
+    if (transactionList == NULL)
+        return;
+    // Bucket* curBucket = (*transactionList)->firstTransaction;
+
+    freeTransactionRec(&(*transactionList)->firstTransaction);
+
+    // while (curBucket != NULL) {
+    //     // free(curBucket->name);
+    //     // curBucket->name = NULL;
+
+    //     if (curBucket->nextBucket != NULL) {
+    //         curBucket = curBucket->nextBucket;
+    //         freeBucket()
+    //         // free(curBucket->prevNode);
+
+    //         // curBucket->prevNode = NULL;
+    //     } else {
+    //         free(curBucket);
+    //         curBucket = NULL;
+    //     }
+    // }
+
+    free((*transactionList)->walletId);
+    (*transactionList)->walletId = NULL;
+
+    free(*transactionList);
+    (*transactionList) = NULL;
+
+    return;
+}
+
+// Bucket* findBucketInTransactionList(TransactionList* transactionList, char* name) {
+//     if (transactionList == NULL)
+//         return NULL;
+
+//     Bucket* curBucket = transactionList->firstTransaction;
+
+//     while (curBucket != NULL) {
+//         if (strcmp(curBucket->name, name) == 0) {
+//             return curBucket;
+//         } else if (strcmp(name, curBucket->name) < 0) {  // no need for searching further since the list is sorted
+//             return NULL;
+//         }
+//         curBucket = curBucket->nextBucket;
+//     }
+//     return NULL;
+// }
+
+Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction) {  // add by pointer
+    if (transactionList->size == 0) {
+        transactionList->firstTransaction = transaction;
+        transactionList->lastTransaction = transactionList->firstTransaction;
+        transactionList->size++;
+        return transactionList->firstTransaction;
+    } else {
+        transactionList->lastTransaction->nextTransaction = transaction;
+        transactionList->lastTransaction = transactionList->lastTransaction->nextTransaction;
+        transactionList->size++;
+        return transactionList->lastTransaction;
+    }
+
+    return NULL;  // not normal behavior
+}
 
 //////////////////////////////////////////////////////////////////////////////// START OF BUCKET ///////////////////////////////////////////////////////////////
 
-Bucket* initBucket(unsigned int maxTransactionsNum) {
+Bucket* initBucket(unsigned int bucketSize) {
     Bucket* bucket = (Bucket*)malloc(sizeof(Bucket));
-    bucket->transactions = initTransactionArray(maxTransactionsNum);
-    bucket->nextIndex = 0;
+    bucket->transactionLists = initTransactionListArray(bucketSize);
     // bucket->name = (char*)malloc(PATH_MAX);
     // strcpy(bucket->name, name);
+    bucket->nextIndex = 0;
     bucket->nextBucket = NULL;
     // bucket->prevNode = NULL;
 
     return bucket;
+}
+
+void freeBucket(Bucket** bucket, unsigned int bucketSize) {
+    freeTransactionListArray(&(*bucket)->transactionLists, bucketSize);
+
+    (*bucket)->transactionLists = NULL;
+    free(*bucket);
+    (*bucket) = NULL;
+
+    return;
 }
 
 void freeBucketRec(HashTable* hashTable, Bucket** bucket) {
@@ -88,7 +211,7 @@ void freeBucketRec(HashTable* hashTable, Bucket** bucket) {
 
     freeBucketRec(hashTable, &((*bucket)->nextBucket));
 
-    freeTransactionArray(&(*bucket)->transactions, hashTable->bucketSize);
+    // freeTransactionArray(&(*bucket)->transactions, hashTable->bucketSize);
 
     // free((*bucket)->name);
     // (*bucket)->name = NULL;
@@ -97,19 +220,20 @@ void freeBucketRec(HashTable* hashTable, Bucket** bucket) {
     return;
 }
 
-Transaction* addTransactionToBucketList(HashTable* hashTable, unsigned int listIndex, Transaction* transaction) {
-    Bucket* lastBucket = hashTable->bucketLists[listIndex]->lastBucket;
+// Transaction* addTransactionToHashTable(HashTable* hashTable, unsigned int listIndex, Transaction* transaction) {
+//     TransactionList* foundTransactionList = findTransactionListInBucketList(hashTable, /*walletid*/, listIndex);
 
-    if (lastBucket->nextIndex >= hashTable->bucketSize) {
-        lastBucket = addBucketToEndOfBucketList(hashTable->bucketLists[listIndex], hashTable->bucketSize);  // maybe add transaction with index of bucketList
-    }
+//     if (foundTransactionList == NULL) {
+//         Bucket* lastBucket = hashTable->bucketLists[listIndex]->lastBucket;
+//         lastBucket->transactionLists[lastBucket->nextIndex] = initTransactionList(walletId);
+//         foundTransactionList = lastBucket->transactionLists[lastBucket->nextIndex];
 
-    // lastBucket->transactions[lastBucket->nextIndex] = initTransaction(transaction->senderWalletId, transaction->receiverWalletId, transaction->datetimeS);
-    lastBucket->transactions[lastBucket->nextIndex] = transaction;  // by pointer
-    lastBucket->nextIndex++;
+//         lastBucket->nextIndex++;
+//     }
 
-    return lastBucket->transactions[lastBucket->nextIndex - 1];
-}
+//     addTransactionToEndOfTransactionList(foundTransactionList, transaction);
+
+// }
 
 //////////////////////////////////////////////////////////////////////////////// END OF BUCKET ///////////////////////////////////////////////////////////////
 
@@ -124,10 +248,10 @@ BucketList** initBucketListArray(unsigned int size) {
     return bucketLists;
 }
 
-BucketList* initBucketList(char* walletId) {
+BucketList* initBucketList() {
     BucketList* bucketList = (BucketList*)malloc(sizeof(BucketList));
-    bucketList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
-    strcpy(bucketList->walletId, walletId);
+    // bucketList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+    // strcpy(bucketList->walletId, walletId);
 
     bucketList->size = 0;
 
@@ -160,13 +284,31 @@ void freeBucketList(HashTable* hashTable, BucketList** bucketList) {
     //     }
     // }
 
-    free((*bucketList)->walletId);
-    (*bucketList)->walletId = NULL;
+    // free((*bucketList)->walletId);
+    // (*bucketList)->walletId = NULL;
 
     free(*bucketList);
     (*bucketList) = NULL;
 
     return;
+}
+
+TransactionList* findTransactionListInBucketList(HashTable* hashTable, char* walletId, unsigned int listIndex) {
+    BucketList* bucketList = hashTable->bucketLists[listIndex];
+
+    Bucket* curBucket = bucketList->firstBucket;
+
+    while (curBucket != NULL) {
+        for (int i = 0; i < hashTable->bucketSize; i++) {
+            if (curBucket->transactionLists[i] != NULL && strcmp(curBucket->transactionLists[i]->walletId) == 0) {
+                return curBucket->transactionLists[i];
+            }
+        }
+        curBucket = curBucket->nextBucket;
+    }
+
+    // not found
+    return NULL;
 }
 
 // Bucket* findBucketInBucketList(BucketList* bucketList, char* name) {
@@ -305,6 +447,18 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
     if (hashTable->bucketLists[index] == NULL) {
         hashTable->bucketLists[index] = initBucketList(transaction->senderWalletId);
     }
+
+    TransactionList* foundTransactionList = findTransactionListInBucketList(hashTable, /*walletid*/, index);
+
+    if (foundTransactionList == NULL) {
+        Bucket* lastBucket = hashTable->bucketLists[index]->lastBucket;
+        lastBucket->transactionLists[lastBucket->nextIndex] = initTransactionList(walletId);
+        foundTransactionList = lastBucket->transactionLists[lastBucket->nextIndex];
+
+        lastBucket->nextIndex++;
+    }
+
+    addTransactionToEndOfTransactionList(foundTransactionList, transaction);
 
     return addTransactionToBucketList(hashTable, index, transaction);
 }

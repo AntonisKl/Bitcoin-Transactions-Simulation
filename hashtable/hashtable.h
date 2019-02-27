@@ -9,17 +9,24 @@ typedef struct Transaction {
     BitcoinList* bitcoinList;
     time_t timestamp;  // millis or sec??
     int amount;
+    Transaction* nextTransaction;
 } Transaction;
 
+typedef struct TransactionList {
+    Transaction* firstTransaction, *lastTransaction;
+    unsigned int size;
+    char* walletId;
+} TransactionList;
+
 typedef struct Bucket {
-    Transaction** transactions;                   // array of fixed size
+    TransactionList** transactionLists;
+    // Transaction** transactions;                   // array of fixed size
     struct Bucket* nextBucket /*, *prevBucket*/;  // no deletions so prevBucket is not needed
     unsigned int nextIndex;
 } Bucket;
 
 typedef struct BucketList {
     Bucket *firstBucket, *lastBucket;
-    char* walletId;
     unsigned int size;
 } BucketList;
 
@@ -34,9 +41,9 @@ Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char*
 
 void freeTransaction(Transaction** transaction);
 
-Transaction** initTransactionArray(unsigned int size);
+// Transaction** initTransactionArray(unsigned int size);
 
-void freeTransactionArray(Transaction*** transactions, unsigned int size);
+// void freeTransactionArray(Transaction*** transactions, unsigned int size);
 // end
 
 // Bucket
@@ -48,7 +55,7 @@ Transaction* addTransactionToBucketList(HashTable* hashTable, unsigned int listI
 
 BucketList** initBucketListArray(unsigned int size);
 
-BucketList* initBucketList(char* walletId);
+BucketList* initBucketList();
 
 void freeBucketList(HashTable* hashTable, BucketList** bucketList);
 
