@@ -79,9 +79,10 @@ void freeTransactionRec(Transaction** transaction) {
 
 TransactionList* initTransactionList(char* walletId) {
     TransactionList* transactionList = (TransactionList*)malloc(sizeof(TransactionList));
-    transactionList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
-    strcpy(transactionList->walletId, walletId);
-
+    if (walletId != NULL) {
+        transactionList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+        strcpy(transactionList->walletId, walletId);
+    }
     transactionList->size = 0;
 
     transactionList->firstTransaction = NULL;
@@ -99,7 +100,6 @@ TransactionList** initTransactionListArray(unsigned int size) {
 
     return transactionLists;
 }
-
 
 void freeTransactionList(TransactionList** transactionList) {
     if (transactionList == NULL)
@@ -178,6 +178,60 @@ Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionLi
 
     return NULL;  // not normal behavior
 }
+
+Transaction* addTransactionToTransactionListSorted(TransactionList* transactionList, Transaction* transaction) {
+    if (transactionList->size == 0) {
+        transactionList->firstTransaction = transaction;
+        transactionList->lastTransaction = transactionList->firstTransaction;
+
+        transactionList->size++;
+        printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+        return transactionList->firstTransaction;
+    } else {
+        Transaction* curTransaction = transactionList->firstTransaction;
+
+        if (transaction->timestamp < curTransaction->timestamp) {
+            // insert at start
+            Transaction* transactionToInsert = transaction;
+            transactionToInsert->nextTransaction = curTransaction;
+
+            // curTransaction->prevTransaction = transactionToInsert;
+            transactionList->firstTransaction = transactionToInsert;
+            transactionList->size++;
+            printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+            return transactionList->firstTransaction;
+        }
+        while (curTransaction != NULL) {
+            if (curTransaction->nextTransaction != NULL) {
+                if (transaction->timestamp < curTransaction->nextTransaction->timestamp) {
+                    Transaction* transactionToInsert = transaction;
+                    // transactionToInsert->prevTransaction = curTransaction;
+                    transactionToInsert->nextTransaction = curTransaction->nextTransaction;
+
+                    // curTransaction->nextTransaction->prevTransaction = transactionToInsert;
+                    curTransaction->nextTransaction = transactionToInsert;
+                    transactionList->size++;
+                    printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+                    return curTransaction->nextTransaction;
+                }
+            } else {
+                // insert at the end
+                curTransaction->nextTransaction = transaction;
+                // curTransaction->nextTransaction->prevTransaction = curTransaction;
+                transactionList->lastTransaction = curTransaction->nextTransaction;
+
+                transactionList->size++;
+                printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+                return curTransaction->nextTransaction;
+            }
+
+            curTransaction = curTransaction->nextTransaction;
+        }
+    }
+
+    return NULL;  // not normal behavior
+}
+
 
 //////////////////////////////////////////////////////////////////////////////// START OF BUCKET ///////////////////////////////////////////////////////////////
 
@@ -462,7 +516,7 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
         //     hashTable->bucketLists[index]->lastBucket = initBucket(hashTable->bucketSize);
         // }
 
-        if (lastBucket->nextIndex >= hashTable->bucketSize) { // bucket is full
+        if (lastBucket->nextIndex >= hashTable->bucketSize) {  // bucket is full
             lastBucket = addBucketToEndOfBucketList(hashTable->bucketLists[index], hashTable->bucketSize);
         }
 

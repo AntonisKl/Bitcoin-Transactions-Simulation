@@ -74,6 +74,8 @@ void freeTransactionListArray(TransactionList*** transactionLists, unsigned int 
 
 Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction);
 
+Transaction* addTransactionToTransactionListSorted(TransactionList* transactionList, Transaction* transaction);
+
 // Transaction** initTransactionArray(unsigned int size);
 
 // void freeTransactionArray(Transaction*** transactions, unsigned int size);

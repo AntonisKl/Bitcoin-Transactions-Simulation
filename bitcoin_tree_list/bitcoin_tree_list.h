@@ -5,6 +5,7 @@
 #include "../hashtable/hashtable.h"
 
 typedef struct Transaction Transaction; // forward declaration for compilation
+typedef struct TransactionList TransactionList; // forward declaration for compilation
 
 typedef struct BitcoinTreeNode {
     char* walletId;
@@ -17,15 +18,19 @@ typedef struct BitcoinTree {
     BitcoinTreeNode* rootNode;
     int bitcoinId;
     unsigned int size;
-    struct BitcoinTree* nextBitcoinTree, *prevBitcoinTree;
 } BitcoinTree;
 
+typedef struct BitcoinListNode {
+    BitcoinTree* bitcoinTree;
+    struct BitcoinListNode* nextNode, *prevNode;
+} BitcoinListNode;
+
 typedef struct BitcoinList { // all the bitcoins that exist
-    BitcoinTree *firstBitcoinTree;
+    BitcoinListNode *firstNode;
     unsigned int size;
 } BitcoinList;
 
-BitcoinTree* initBitcoinTree();
+BitcoinTree* initBitcoinTree(int startAmount);
 
 BitcoinTreeNode* initBitcoinTreeNode(char* walletId, int amount, Transaction* transaction);
 
@@ -37,20 +42,35 @@ void freeBitcoinTree(BitcoinTree** bitcoinTree);
 
 BitcoinTreeNode* findBitcoinTreeNodeOfBitcoinTree(char* walletId, int amount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
-int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int amount);
+BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
 ///////////////////////////////////////////////
 
 BitcoinList* initBitcoinList();
 
-void freeBitcoinTreeRec(BitcoinTree** bitcoinTree);
+BitcoinListNode* initBitcoinListNode(BitcoinTree* bitcoinTree);
+
+void freeBitcoinListNode(BitcoinListNode** bitcoinListNode);
+
+void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode);
 
 void freeBitcoinList(BitcoinList** bitcoinList);
 
-BitcoinTree* findBitcoinTreeInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
+BitcoinListNode* findBitcoinListNodeInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
-BitcoinTree* addBitcoinTreeToBitcoinList(BitcoinList* bitcoinList, int bitcoinId, int startAmount);
+BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, int bitcoinId, int startAmount);
 
-int deleteBitcoinTreeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
+int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
+
+///////////////////////////////////////////////
+// high level functions
+
+int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction);
+
+void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode);
+
+TransactionList* findTransactionsInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
+
+int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId);
 
 #endif
