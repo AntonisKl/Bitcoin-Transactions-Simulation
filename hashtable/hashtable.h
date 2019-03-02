@@ -4,16 +4,18 @@
 #include "../utils/utils.h"
 #include "../bitcoin_tree_list/bitcoin_tree_list.h"
 
+typedef struct BitcoinList BitcoinList; // forward declaration for compilation
+
 typedef struct Transaction {
-    char *senderWalletId, *receiverWalletId, *datetimeS;
-    BitcoinList* bitcoinList;
+    char *transactionId, *senderWalletId, *receiverWalletId, *datetimeS;
+    BitcoinList* bitcoinList; // bitcoins involved
     time_t timestamp;  // millis or sec??
     int amount;
-    Transaction* nextTransaction;
+    struct Transaction* nextTransaction;
 } Transaction;
 
 typedef struct TransactionList {
-    Transaction* firstTransaction, *lastTransaction;
+    Transaction *firstTransaction, *lastTransaction;
     unsigned int size;
     char* walletId;
 } TransactionList;
@@ -33,13 +35,44 @@ typedef struct BucketList {
 typedef struct HashTable {
     BucketList** bucketLists;  // array of fixed size according to number of walletIds
     char* walletId;
-    unsigned int bucketListArraySize, bucketSize;
+    unsigned int bucketListArraySize, bucketSize; // bucketSize: number of transaction lists that fit inside a bucket
 } HashTable;
 
+typedef enum HashTableType {
+    SENDER, RECEIVER
+} HashTableType;
+
 // Transaction
-Transaction* initTransaction(char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList);
+Transaction* initTransaction(char* transactionId, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList);
 
 void freeTransaction(Transaction** transaction);
+
+TransactionList* initTransactionList(char* walletId);
+
+TransactionList** initTransactionListArray(unsigned int size);
+
+void freeTransactionList(TransactionList** transactionList);
+
+void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size);
+
+// Bucket* findBucketInTransactionList(TransactionList* transactionList, char* name) {
+//     if (transactionList == NULL)
+//         return NULL;
+
+//     Bucket* curBucket = transactionList->firstTransaction;
+
+//     while (curBucket != NULL) {
+//         if (strcmp(curBucket->name, name) == 0) {
+//             return curBucket;
+//         } else if (strcmp(name, curBucket->name) < 0) {  // no need for searching further since the list is sorted
+//             return NULL;
+//         }
+//         curBucket = curBucket->nextBucket;
+//     }
+//     return NULL;
+// }
+
+Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction);
 
 // Transaction** initTransactionArray(unsigned int size);
 
@@ -47,7 +80,7 @@ void freeTransaction(Transaction** transaction);
 // end
 
 // Bucket
-Bucket* initBucket(unsigned int maxTransactionsNum);
+Bucket* initBucket(unsigned int bucketSize);
 
 void freeBucketRec(HashTable* hashTable, Bucket** bucket);
 
@@ -59,7 +92,7 @@ BucketList* initBucketList();
 
 void freeBucketList(HashTable* hashTable, BucketList** bucketList);
 
-Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int maxTransactionsNum);
+Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSize);
 // end
 
 // Hash Table
@@ -67,7 +100,9 @@ HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSi
 
 unsigned int hashFunction(HashTable* hashTable, char* walletId);
 
-Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction);
+char* getWalletIdByHashTableType(Transaction* transaction, HashTableType type);
+
+Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction, HashTableType hashTableType);
 // end
 
 #endif
