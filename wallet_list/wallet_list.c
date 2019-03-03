@@ -13,6 +13,7 @@ Wallet* initWallet(char* walletId, unsigned int balance, BitcoinList* bitcoinLis
 
     wallet->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
     wallet->bitcoinList = bitcoinList;
+    wallet->balance = balance;
     wallet->nextWallet = NULL;
 
     return wallet;
@@ -163,6 +164,16 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
     }
 
     return NULL;  // not normal behavior
+}
+
+unsigned int getFirstBitcoinBalanceOfUser(WalletList* walletList, char* walletId) {
+    Wallet* foundWallet = findWalletInWalletList(walletList, walletId);
+    if (foundWallet == NULL) {
+        printf("Wallet not found\n");
+        return -1;
+    }
+
+    return getUnspentAmountOfBitcoinByTree(foundWallet->bitcoinList->firstNode->bitcoinTree);
 }
 
 // int deleteWalletFromWalletList(WalletList* walletList, char* name) {

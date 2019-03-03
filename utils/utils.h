@@ -46,6 +46,8 @@
 //     unsigned int size;
 // } WalletList;
 
+void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** transactionsFileName, int* bitcoinValue, int* senderHashTableSize,
+                int* receiverHashTableSize, int* bucketSizeBytes);
 
 time_t datetimeStringToTimeStamp(char* datetimeS);
 

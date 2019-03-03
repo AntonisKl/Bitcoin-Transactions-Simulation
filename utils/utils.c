@@ -193,6 +193,74 @@
 // //     return 0;
 // // }
 
+void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** transactionsFileName, int* bitcoinValue, int* senderHashTableSize,
+                int* receiverHashTableSize, int* bucketSizeBytes) {
+    if (argc != 13) {
+        printf("Invalid arguments. Exiting...\n");
+        exit(1);
+    }
+
+    if (strcmp(argv[1], "-a") == 0) {
+        (*bitcoinBalancesFileName) = argv[2];
+    } else {
+        printf("Invalid arguments\nExiting...\n");
+        exit(1);
+    }
+
+    if (strcmp(argv[3], "-t") == 0) {
+        (*transactionsFileName) = argv[4];
+    } else {
+        printf("Invalid arguments\nExiting...\n");
+        exit(1);
+    }
+
+    if (strcmp(argv[5], "-v") == 0) {
+        (*bitcoinValue) = atoi(argv[6]);
+        if ((*bitcoinValue) <= 0) {
+            printf("Invalid arguments\nExiting...\n");
+            exit(1);
+        }
+    } else {
+        printf("Invalid arguments\nExiting...\n");
+        exit(1);
+    }
+
+    if (strcmp(argv[7], "-h1") == 0) {
+        (*senderHashTableSize) = atoi(argv[8]);
+        if ((*senderHashTableSize) <= 0) {
+            printf("Invalid arguments\nExiting...\n");
+            exit(1);
+        }
+    } else {
+        printf("Invalid arguments\nExiting...\n");
+        exit(1);
+    }
+
+    if (strcmp(argv[9], "-h2") == 0) {
+        (*receiverHashTableSize) = atoi(argv[10]);
+        if ((*receiverHashTableSize) <= 0) {
+            printf("Invalid arguments\nExiting...\n");
+            exit(1);
+        }
+    } else {
+        printf("Invalid arguments\nExiting...\n");
+        exit(1);
+    }
+
+    if (strcmp(argv[11], "-b") == 0) {
+        (*bucketSizeBytes) = atoi(argv[12]);
+        if ((*bucketSizeBytes) <= 0) {
+            printf("Invalid arguments\nExiting...\n");
+            exit(1);
+        }
+    } else {
+        printf("Invalid arguments\nExiting...\n");
+        exit(1);
+    }
+
+    return;
+}
+
 time_t datetimeStringToTimeStamp(char* datetimeS) {
     struct tm timeStruct;
     time_t timestamp;

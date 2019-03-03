@@ -44,6 +44,8 @@ BitcoinTreeNode* findBitcoinTreeNodeOfBitcoinTree(char* walletId, int amount, Bi
 
 BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
+void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode);
+
 ///////////////////////////////////////////////
 
 BitcoinList* initBitcoinList();
@@ -67,10 +69,10 @@ int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId
 
 int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction);
 
-void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode);
-
 TransactionList* findTransactionsInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
 int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId);
+
+int getUnspentAmountOfBitcoinByTree(BitcoinTree* bitcoinTree);
 
 #endif

@@ -102,7 +102,7 @@ TransactionList** initTransactionListArray(unsigned int size) {
 }
 
 void freeTransactionList(TransactionList** transactionList) {
-    if (transactionList == NULL)
+    if ((*transactionList) == NULL)
         return;
     // Bucket* curBucket = (*transactionList)->firstTransaction;
 
@@ -134,6 +134,9 @@ void freeTransactionList(TransactionList** transactionList) {
 }
 
 void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size) {
+    if ((*transactionLists) == NULL)
+        return;
+
     for (int i = 0; i < size; i++) {
         if ((*transactionLists)[i] != NULL) {
             freeTransactionList(&(*transactionLists)[i]);

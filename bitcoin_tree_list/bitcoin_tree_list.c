@@ -81,6 +81,18 @@ BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, Bi
     return findBitcoinTreeNodeOfBitcoinTree(walletId, bitcoinAmount, nextBitcoinTreeNode->remainingNode);
 }
 
+void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode) {
+    if (nextBitcoinTreeNode == NULL)
+        return;
+
+    if (nextBitcoinTreeNode->transaction != NULL) {
+        addTransactionToTransactionListSorted(foundTransactionList, nextBitcoinTreeNode->transaction);
+    }
+
+    return getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->receiverNode);
+    return getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->remainingNode);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BitcoinList* initBitcoinList() {
@@ -305,18 +317,6 @@ int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction) {
     return 0;
 }
 
-void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode) {
-    if (nextBitcoinTreeNode == NULL)
-        return;
-
-    if (nextBitcoinTreeNode->transaction != NULL) {
-        addTransactionToTransactionListSorted(foundTransactionList, nextBitcoinTreeNode->transaction);
-    }
-
-    return getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->receiverNode);
-    return getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->remainingNode);
-}
-
 TransactionList* findTransactionsInBitcoinList(BitcoinList* bitcoinList, int bitcoinId) {
     BitcoinListNode* foundBitcoinListNode = findBitcoinListNodeInBitcoinList(bitcoinList, bitcoinId);
     if (foundBitcoinListNode == NULL) {
@@ -341,6 +341,15 @@ int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId) {
     }
 
     BitcoinTreeNode* curBitcoinTreeNode = foundBitcoinListNode->bitcoinTree->rootNode;
+    while (curBitcoinTreeNode->remainingNode != NULL) {
+        curBitcoinTreeNode = curBitcoinTreeNode->remainingNode;
+    }
+
+    return curBitcoinTreeNode->amount;
+}
+
+int getUnspentAmountOfBitcoinByTree(BitcoinTree* bitcoinTree) {
+    BitcoinTreeNode* curBitcoinTreeNode = bitcoinTree->rootNode;
     while (curBitcoinTreeNode->remainingNode != NULL) {
         curBitcoinTreeNode = curBitcoinTreeNode->remainingNode;
     }

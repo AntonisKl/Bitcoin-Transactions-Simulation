@@ -6,6 +6,7 @@
 
 typedef struct Wallet {
     char* walletId;
+    unsigned int balance;
     BitcoinList* bitcoinList; // bitcoins owned by this user
     struct Wallet* nextWallet;
 } Wallet;
