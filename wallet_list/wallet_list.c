@@ -27,7 +27,7 @@ void freeWallet(Wallet** wallet) {
     free((*wallet)->walletId);
     (*wallet)->walletId = NULL;
 
-    // freeBitcoinList(&(*wallet)->bitcoinList);        ////////////////////////////////// THIS CAUSES FREE ERROR
+    freeBitcoinListNoTrees(&(*wallet)->bitcoinList);        ////////////////////////////////// THIS CAUSES FREE ERROR
     
     (*wallet)->nextWallet = NULL;
 

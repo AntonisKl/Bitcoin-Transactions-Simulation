@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////// START OF TRANSACTION ///////////////////////////////////////////////////////////////
 
 Transaction* initTransaction(char* transactionId, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList) {  // bitcoinList will be already initialized
-    Transaction* transaction = malloc(sizeof(Transaction));
+    Transaction* transaction = (Transaction*)malloc(sizeof(Transaction));
 
     transaction->transactionId = (char*)malloc(MAX_TRANSACTION_ID_SIZE);
     strcpy(transaction->transactionId, transactionId);
@@ -85,6 +85,8 @@ TransactionList* initTransactionList(char* walletId) {
     if (walletId != NULL) {
         transactionList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
         strcpy(transactionList->walletId, walletId);
+    } else {
+        transactionList->walletId = NULL;
     }
     transactionList->size = 0;
 
@@ -258,7 +260,6 @@ void freeBucket(Bucket** bucket, unsigned int bucketSize) {
 
     freeTransactionListArray(&(*bucket)->transactionLists, bucketSize);
 
-    (*bucket)->transactionLists = NULL;
     free(*bucket);
     (*bucket) = NULL;
 
@@ -275,8 +276,10 @@ void freeBucketRec(HashTable* hashTable, Bucket** bucket) {
 
     // free((*bucket)->name);
     // (*bucket)->name = NULL;
-    free(*bucket);
-    (*bucket) = NULL;
+
+    freeBucket(bucket, hashTable->bucketSize);
+    // free(*bucket);
+    // (*bucket) = NULL;
     return;
 }
 
@@ -509,8 +512,11 @@ HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSi
 void freeHashTable(HashTable** hashTable) {
     if ((*hashTable) == NULL)
         return;
-    
+
     freeBucketListArray((*hashTable), &(*hashTable)->bucketLists, (*hashTable)->bucketListArraySize);
+
+    free(*hashTable);
+    (*hashTable) = NULL;
 }
 
 unsigned int hashFunction(HashTable* hashTable, char* walletId) {

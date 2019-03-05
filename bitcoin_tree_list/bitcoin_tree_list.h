@@ -58,9 +58,15 @@ BitcoinListNode* initBitcoinListNode(BitcoinTree* bitcoinTree);
 
 void freeBitcoinListNode(BitcoinListNode** bitcoinListNode);
 
+void freeBitcoinListNodeNoTree(BitcoinListNode** bitcoinListNode);
+
 void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode);
 
+void freeBitcoinListNodeRecNoTree(BitcoinListNode** bitcoinListNode);
+
 void freeBitcoinList(BitcoinList** bitcoinList);
+
+void freeBitcoinListNoTrees(BitcoinList** bitcoinList);
 
 BitcoinListNode* findBitcoinListNodeInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 

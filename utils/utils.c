@@ -290,7 +290,7 @@ void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinL
             errno = 0;
             bitcoinId = strtol(token, &endptr, 10);
             if ((endptr == token) || ((bitcoinId == LONG_MAX || bitcoinId == LONG_MIN) && errno == ERANGE)) {
-                perror("Invalid bitcoin balances file");
+                printf("Invalid bitcoin balances file\n");
                 exit(1);
             }
 
@@ -533,6 +533,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
 }
 
 void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList) {
+    printf("in free memory\n");
     freeHashTable(senderHashTable);
     freeHashTable(receiverHashTable);
     freeBitcoinList(bitcoinList);
