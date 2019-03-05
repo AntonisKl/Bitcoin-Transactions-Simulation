@@ -261,6 +261,286 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
     return;
 }
 
+void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinList** bitcoinList, int bitcoinValue) {
+    (*walletList) = initWalletList();
+    (*bitcoinList) = initBitcoinList();
+
+    char line[MAX_FILE_LINE_SIZE], walletId[MAX_WALLET_ID_SIZE], *token;
+    BitcoinList* curWalletBitcoinList;
+    FILE* fileP;
+    int bitcoinId;
+
+    if ((fileP = fopen(fileName, "r")) == NULL) {
+        perror("fopen error");
+        exit(1);
+    }
+
+    while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
+        token = strtok(line, " ");
+        if (token == NULL) {
+            printf("Invalid bitcoin balances file");
+            exit(1);
+        }
+        strcpy(walletId, token);
+
+        curWalletBitcoinList = initBitcoinList();  // caution!!!!!!!!!!! it is a pointer!!!!!!!!
+        
+        while ((token = strtok(NULL, " ")) != NULL) {
+            char* endptr;
+            errno = 0;
+            bitcoinId = strtol(token, &endptr, 10);
+            if ((endptr == token) || ((bitcoinId == LONG_MAX || bitcoinId == LONG_MIN) && errno == ERANGE)) {
+                perror("Invalid bitcoin balances file");
+                exit(1);
+            }
+
+            // addBitcoinListNodeToBitcoinList(curWalletBitcoinList, bitcoinId, bitcoinValue); // add to wallet's list
+            addBitcoinListNodeToBitcoinListByPointer(curWalletBitcoinList, addBitcoinListNodeToBitcoinList((*bitcoinList), walletId, bitcoinId, bitcoinValue));
+        }
+
+        addWalletToWalletList((*walletList), walletId, bitcoinValue * curWalletBitcoinList->size, curWalletBitcoinList);  // watch out with bitcoin list!!!!!!!!!
+    }
+
+    fclose(fileP);
+
+    return;
+}
+
+void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId) {
+    int bitcoinAmount;
+    char *endptr, *token, transactionId[MAX_TRANSACTION_ID_SIZE], senderWalletId[MAX_WALLET_ID_SIZE], receiverWalletId[MAX_WALLET_ID_SIZE], dateTimeS[MAX_DATETIME_SIZE];
+
+    if (withTransactionId == 1) {
+        token = strtok(transactionS, " ");
+        if (token == NULL) {
+            printf("Invalid transactions string");
+            exit(1);
+        }
+
+        // errno = 0;
+        // transactionId = strtol(token, &endptr, 10);
+        // if ((endptr == token) || ((transactionId == LONG_MAX || transactionId == LONG_MIN) && errno == ERANGE)) {
+        //     printf("Invalid transactions file");
+        //     exit(1);
+        // }
+        strcpy(transactionId, token);
+    } else {
+        int id = rand();
+        char idS[MAX_STRING_INT_SIZE];
+        sprintf(idS, "%d", id);
+        while (findTransactionInHashTable(senderHashTable, idS) != NULL) {
+            id = rand();
+            sprintf(idS, "%d", id);
+        }
+
+        strcpy(transactionId, idS);
+    }
+
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("Invalid transactions string");
+        exit(1);
+    }
+    strcpy(senderWalletId, token);
+
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("Invalid transactions string");
+        exit(1);
+    }
+    strcpy(receiverWalletId, token);
+
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("Invalid transactions string");
+        exit(1);
+    }
+    errno = 0;
+    bitcoinAmount = strtol(token, &endptr, 10);
+    if ((endptr == token) || ((bitcoinAmount == LONG_MAX || bitcoinAmount == LONG_MIN) && errno == ERANGE)) {
+        perror("Invalid transactions string");
+        exit(1);
+    }
+
+    token = strtok(NULL, "\n");
+    if (token == NULL) {
+        printf("Invalid transactions string\n");
+        exit(1);
+    }
+    strcpy(dateTimeS, token);
+
+    Wallet* foundSenderWallet = findWalletInWalletList(walletList, senderWalletId);
+    if (foundSenderWallet == NULL) {
+        printf("sender wallet id does not exist\n");
+        // exit(1);
+        return;
+    }
+    Wallet* foundReceiverWallet = findWalletInWalletList(walletList, senderWalletId);
+    if (foundReceiverWallet == NULL) {
+        printf("receiver wallet id does not exist\n");
+        // exit(1);
+        return;
+    }
+    printf("hello\n");
+
+    // Transaction* foundTransaction = find ////// HERE CHECK IF TRANSACTION ALREADY EXISTSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+    if (findTransactionInHashTable(senderHashTable, transactionId) != NULL) {
+        printf("Invalid transaction id\n");
+        return;
+    }
+    printf("hello1\n");
+
+    BitcoinList* transactionBitcoinList = initBitcoinList();  // NOT USED!!!!!!!!!!!!!!!! (YET)
+    Transaction* createdTransaction = initTransaction(transactionId, senderWalletId, receiverWalletId, dateTimeS, transactionBitcoinList);
+    printf("hello1.5\n");
+
+    if (handleWalletToWalletTransfer(foundSenderWallet, foundReceiverWallet, createdTransaction) == -1) {
+        printf("Transaction not completed\n");
+        return;
+    }
+    printf("hello2\n");
+
+    insertTransactionToHashTable(senderHashTable, createdTransaction, SENDER);
+    insertTransactionToHashTable(receiverHashTable, createdTransaction, RECEIVER);
+}
+
+void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
+                            int senderHashTableSize, int receiverHashTableSize, int bucketSize) {
+    (*senderHashTable) = initHashTable(senderHashTableSize, bucketSize);
+    (*receiverHashTable) = initHashTable(receiverHashTableSize, bucketSize);
+
+    char line[MAX_FILE_LINE_SIZE] /*, senderWalletId[MAX_WALLET_ID_SIZE], receiverWalletId[MAX_WALLET_ID_SIZE], dateTimeS[MAX_DATETIME_SIZE], *token*/;
+    FILE* fileP;
+
+    if ((fileP = fopen(fileName, "r")) == NULL) {
+        perror("fopen error");
+        exit(1);
+    }
+
+    while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
+        handleTransactionString(line, walletList, (*senderHashTable), (*receiverHashTable), 1);
+        // char* endptr;
+
+        // token = strtok(line, " ");
+        // if (token == NULL) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+
+        // errno = 0;
+        // transactionId = strtol(token, &endptr, 10);
+        // if ((endptr == token) || ((transactionId == LONG_MAX || transactionId == LONG_MIN) && errno == ERANGE)) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+
+        // token = strtok(NULL, " ");
+        // if (token == NULL) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+        // strcpy(senderWalletId, token);
+
+        // token = strtok(NULL, " ");
+        // if (token == NULL) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+        // strcpy(receiverWalletId, token);
+
+        // token = strtok(NULL, " ");
+        // if (token == NULL) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+        // errno = 0;
+        // bitcoinAmount = strtol(token, &endptr, 10);
+        // if ((endptr == token) || ((bitcoinAmount == LONG_MAX || bitcoinAmount == LONG_MIN) && errno == ERANGE)) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+
+        // token = strtok(NULL, "\n");
+        // if (token == NULL) {
+        //     perror("Invalid transactions file");
+        //     exit(1);
+        // }
+        // strcpy(dateTimeS, token);
+
+        // Wallet* foundSenderWallet = findWalletInWalletList(walletList, senderWalletId);
+        // if (foundSenderWallet == NULL) {
+        //     perror("sender wallet id does not exist");
+        //     // exit(1);
+        //     continue;
+        // }
+        // Wallet* foundReceiverWallet = findWalletInWalletList(walletList, senderWalletId);
+        // if (foundReceiverWallet == NULL) {
+        //     perror("receiver wallet id does not exist");
+        //     // exit(1);
+        //     continue;
+        // }
+        // BitcoinList* transactionBitcoinList = initBitcoinList(); // NOT USED!!!!!!!!!!!!!!!! (YET)
+        // Transaction* createdTransaction = initTransaction(transactionId, senderWalletId, receiverWalletId, dateTimeS, transactionBitcoinList);
+
+        // if (handleWalletToWalletTransfer(foundSenderWallet, foundReceiverWallet, createdTransaction) == -1) {
+        //     perror("Transaction not completed");
+        //     continue;
+        // }
+
+        // insertTransactionToHashTable((*senderHashTable), createdTransaction, SENDER);
+        // insertTransactionToHashTable((*receiverHashTable), createdTransaction, RECEIVER);
+    }
+
+    fclose(fileP);
+}
+
+void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList) {
+    char inputS[MAX_INPUT_SIZE], *token;
+
+    fgets(inputS, MAX_INPUT_SIZE, stdin);
+    token = strtok(inputS, " ");
+    while (token == NULL) {
+        printf("Invalid input, try again\n");
+        fgets(inputS, MAX_INPUT_SIZE, stdin);
+        token = strtok(inputS, " ");
+    }
+
+    while (strcmp(token, "./exit") != 0) {
+        if (strcmp(token, "./requestTransaction")) {
+            handleTransactionString(strtok(NULL, "\n"), walletList, senderHashTable, receiverHashTable, 0);
+        } else if (strcmp(token, "./requestTransactions")) {
+            token = strtok(NULL, ";");
+            while (token != NULL) {
+                handleTransactionString(token, walletList, senderHashTable, receiverHashTable, 0);
+            }
+        } else if (strcmp(token, "./findEarnings")) {
+        } else if (strcmp(token, "./findPayments")) {
+        } else if (strcmp(token, "./walletStatus")) {
+        } else if (strcmp(token, "./bitCoinStatus")) {
+        } else if (strcmp(token, "./traceCoin")) {
+        }
+
+        fgets(inputS, MAX_INPUT_SIZE, stdin);
+        token = strtok(inputS, " ");
+        while (token == NULL) {
+            printf("Invalid input, try again\n");
+            fgets(inputS, MAX_INPUT_SIZE, stdin);
+            token = strtok(inputS, " ");
+        }
+    }
+
+    return;
+}
+
+void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList) {
+    freeHashTable(senderHashTable);
+    freeHashTable(receiverHashTable);
+    freeBitcoinList(bitcoinList);
+    freeWalletList(walletList);
+
+    return;
+}
+
 time_t datetimeStringToTimeStamp(char* datetimeS) {
     struct tm timeStruct;
     time_t timestamp;

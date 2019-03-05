@@ -12,19 +12,27 @@ Wallet* initWallet(char* walletId, unsigned int balance, BitcoinList* bitcoinLis
     Wallet* wallet = (Wallet*)malloc(sizeof(Wallet));
 
     wallet->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+    strcpy(wallet->walletId, walletId);
     wallet->bitcoinList = bitcoinList;
-    wallet->balance = balance;
+    wallet->balance = balance;  // dollars
     wallet->nextWallet = NULL;
 
     return wallet;
 }
 
 void freeWallet(Wallet** wallet) {
+    if ((*wallet) == NULL)
+        return;
+
     free((*wallet)->walletId);
     (*wallet)->walletId = NULL;
 
-    freeBitcoinList(&(*wallet)->bitcoinList);
+    // freeBitcoinList(&(*wallet)->bitcoinList);        ////////////////////////////////// THIS CAUSES FREE ERROR
+    
     (*wallet)->nextWallet = NULL;
+
+    free(*wallet);
+    (*wallet) = NULL;
 }
 
 // Wallet* initWallet(char* name) {
@@ -78,10 +86,6 @@ void freeWalletRec(Wallet** wallet) {
     // freeTransactionArray(&(*bucket)->transactions, hashTable->bucketSize);
     freeWallet(&(*wallet));
 
-    free((*wallet)->walletId);
-    (*wallet)->walletId = NULL;
-    free(*wallet);
-    (*wallet) = NULL;
     return;
 }
 
@@ -90,7 +94,6 @@ void freeWalletList(WalletList** walletList) {
         return;
 
     freeWalletRec(&(*walletList)->firstWallet);
-    (*walletList)->firstWallet = NULL;
 
     free(*walletList);
     (*walletList) = NULL;
@@ -104,7 +107,9 @@ Wallet* findWalletInWalletList(WalletList* walletList, char* walletId) {
 
     Wallet* curWallet = walletList->firstWallet;
 
+    // printf("first wallet id: %s\n", walletId);
     while (curWallet != NULL) {
+        // printf("%s\n", curWallet->walletId);
         if (strcmp(curWallet->walletId, walletId) == 0) {
             return curWallet;
         } else if (strcmp(walletId, curWallet->walletId) < 0) {  // no need for searching further since the list is sorted
@@ -174,6 +179,36 @@ unsigned int getFirstBitcoinBalanceOfUser(WalletList* walletList, char* walletId
     }
 
     return getUnspentAmountOfBitcoinByTree(foundWallet->bitcoinList->firstNode->bitcoinTree);
+}
+
+int handleWalletToWalletTransfer(Wallet* senderWallet, Wallet* receiverWallet, Transaction* transaction) {
+    int amountToSpend = transaction->amount;
+    if (senderWallet->balance < amountToSpend) {
+        printf("Insufficient balance\n");
+        return -1;
+    }
+    printf("handleWalletToWalletTransfer1\n");
+    // addLogToBitcoinTree(senderWallet->bitcoinList->firstNode->bitcoinTree, transaction, &amountToSpend);
+    // addBitcoinListNodeToBitcoinListByPointer(receiverWallet->bitcoinList,,
+    //                                 prevAmountToSpend - amountToSpend);
+    while (amountToSpend > 0) {
+        addLogToBitcoinTree(senderWallet->bitcoinList->firstNode->bitcoinTree, transaction, &amountToSpend);
+        addBitcoinListNodeToBitcoinListByPointer(receiverWallet->bitcoinList, senderWallet->bitcoinList->firstNode);
+        if (amountToSpend > 0) {
+            deleteBitcoinListNodeFromBitcoinList(senderWallet->bitcoinList, senderWallet->bitcoinList->firstNode->bitcoinTree->bitcoinId);
+        }
+    }
+    printf("handleWalletToWalletTransfer2\n");
+
+    if (getCurrentBitcoinBalanceOfWalletId(senderWallet->bitcoinList->firstNode->bitcoinTree, senderWallet->walletId) <= 0) {
+            printf("handleWalletToWalletTransfer3\n");
+        deleteBitcoinListNodeFromBitcoinList(senderWallet->bitcoinList, senderWallet->bitcoinList->firstNode->bitcoinTree->bitcoinId);
+    }
+
+    senderWallet->balance -= transaction->amount;
+    receiverWallet->balance += transaction->amount;
+
+    return 0;
 }
 
 // int deleteWalletFromWalletList(WalletList* walletList, char* name) {

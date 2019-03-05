@@ -94,17 +94,23 @@ BucketList* initBucketList();
 
 void freeBucketList(HashTable* hashTable, BucketList** bucketList);
 
+void freeBucketListArray(HashTable* hashTable, BucketList*** bucketLists, unsigned int size);
+
 Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSize);
 // end
 
 // Hash Table
 HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSize);
 
+void freeHashTable(HashTable** hashTable);
+
 unsigned int hashFunction(HashTable* hashTable, char* walletId);
 
 char* getWalletIdByHashTableType(Transaction* transaction, HashTableType type);
 
 Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction, HashTableType hashTableType);
+
+Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId);
 // end
 
 #endif

@@ -30,11 +30,11 @@ typedef struct BitcoinList { // all the bitcoins that exist
     unsigned int size;
 } BitcoinList;
 
-BitcoinTree* initBitcoinTree(int startAmount);
+BitcoinTree* initBitcoinTree(int startAmount, char* walletId);
 
 BitcoinTreeNode* initBitcoinTreeNode(char* walletId, int amount, Transaction* transaction);
 
-BitcoinTreeNode* initBitCoinTreeRootNode(int startAmount);
+// BitcoinTreeNode* initBitCoinTreeRootNode(int startAmount);
 
 void freeBitcoinTreeNodeRec(BitcoinTreeNode** bitcoinTreeNode);
 
@@ -43,6 +43,10 @@ void freeBitcoinTree(BitcoinTree** bitcoinTree);
 BitcoinTreeNode* findBitcoinTreeNodeOfBitcoinTree(char* walletId, int amount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
 BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
+
+void getTotalBitcoinBalanceOfWalletId(char* walletId, int* balance, BitcoinTreeNode* nextBitcoinTreeNode);
+
+void handleLog(char* walletId, Transaction* transaction, int* bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
 void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode);
 
@@ -60,19 +64,23 @@ void freeBitcoinList(BitcoinList** bitcoinList);
 
 BitcoinListNode* findBitcoinListNodeInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
-BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, int bitcoinId, int startAmount);
+BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char* walletId, int bitcoinId, int startAmount);
+
+BitcoinListNode* addBitcoinListNodeToBitcoinListByPointer(BitcoinList* bitcoinList, BitcoinListNode* bitcoinListNode);
 
 int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
 ///////////////////////////////////////////////
 // high level functions
 
-int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction);
+int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int* amount);
 
 TransactionList* findTransactionsInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
 int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId);
 
 int getUnspentAmountOfBitcoinByTree(BitcoinTree* bitcoinTree);
+
+int getCurrentBitcoinBalanceOfWalletId(BitcoinTree* bitcoinTree, char* walletId);
 
 #endif

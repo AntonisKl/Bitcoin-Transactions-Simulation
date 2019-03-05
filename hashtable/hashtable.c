@@ -26,6 +26,9 @@ Transaction* initTransaction(char* transactionId, char* senderWalletId, char* re
 }
 
 void freeTransaction(Transaction** transaction) {
+    if ((*transaction) == NULL)
+        return;
+
     free((*transaction)->transactionId);
     (*transaction)->transactionId = NULL;
     free((*transaction)->senderWalletId);
@@ -235,7 +238,6 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
     return NULL;  // not normal behavior
 }
 
-
 //////////////////////////////////////////////////////////////////////////////// START OF BUCKET ///////////////////////////////////////////////////////////////
 
 Bucket* initBucket(unsigned int bucketSize) {
@@ -251,6 +253,9 @@ Bucket* initBucket(unsigned int bucketSize) {
 }
 
 void freeBucket(Bucket** bucket, unsigned int bucketSize) {
+    if ((*bucket) == NULL)
+        return;
+
     freeTransactionListArray(&(*bucket)->transactionLists, bucketSize);
 
     (*bucket)->transactionLists = NULL;
@@ -317,7 +322,7 @@ BucketList* initBucketList() {
 }
 
 void freeBucketList(HashTable* hashTable, BucketList** bucketList) {
-    if (bucketList == NULL)
+    if ((*bucketList) == NULL)
         return;
     // Bucket* curBucket = (*bucketList)->firstBucket;
 
@@ -344,6 +349,22 @@ void freeBucketList(HashTable* hashTable, BucketList** bucketList) {
 
     free(*bucketList);
     (*bucketList) = NULL;
+
+    return;
+}
+
+void freeBucketListArray(HashTable* hashTable, BucketList*** bucketLists, unsigned int size) {
+    if ((*bucketLists) == NULL)
+        return;
+
+    for (int i = 0; i < size; i++) {
+        if ((*bucketLists)[i] != NULL) {
+            freeBucketList(hashTable, &(*bucketLists)[i]);
+        }
+    }
+
+    free(*bucketLists);
+    (*bucketLists) = NULL;
 
     return;
 }
@@ -485,6 +506,13 @@ HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSi
     return hashTable;
 }
 
+void freeHashTable(HashTable** hashTable) {
+    if ((*hashTable) == NULL)
+        return;
+    
+    freeBucketListArray((*hashTable), &(*hashTable)->bucketLists, (*hashTable)->bucketListArraySize);
+}
+
 unsigned int hashFunction(HashTable* hashTable, char* walletId) {
     // djb2 hash function
     unsigned long hash = 5381;
@@ -532,6 +560,31 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
     return addTransactionToEndOfTransactionList(foundTransactionList, transaction);
 
     // return addTransactionToBucketList(hashTable, index, transaction);
+}
+
+Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId) {
+    for (int i = 0; i < hashTable->bucketListArraySize; i++) {
+        BucketList* curBucketList = hashTable->bucketLists[i];
+        if (curBucketList == NULL)
+            continue;
+
+        Bucket* curBucket = curBucketList->firstBucket;
+        while (curBucket != NULL) {
+            for (int j = 0; j < curBucket->nextIndex; j++) {
+                TransactionList* curTransactionList = curBucket->transactionLists[j];
+                Transaction* curTransaction = curTransactionList->firstTransaction;
+                while (curTransaction != NULL) {
+                    if (strcmp(curTransaction->transactionId, transactionId) == 0) {
+                        return curTransaction;
+                    }
+                    curTransaction = curTransaction->nextTransaction;
+                }
+            }
+            curBucket = curBucket->nextBucket;
+        }
+    }
+
+    return NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////// END OF HASH TABLE ///////////////////////////////////////////////////////////////

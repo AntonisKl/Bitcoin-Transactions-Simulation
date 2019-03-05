@@ -4,9 +4,12 @@
 #include "../utils/utils.h"
 #include "../bitcoin_tree_list/bitcoin_tree_list.h"
 
+typedef struct BitcoinList BitcoinList;
+typedef struct Transaction Transaction;
+
 typedef struct Wallet {
     char* walletId;
-    unsigned int balance;
+    unsigned int balance; // represents dollars
     BitcoinList* bitcoinList; // bitcoins owned by this user
     struct Wallet* nextWallet;
 } Wallet;
@@ -29,5 +32,7 @@ void freeWalletList(WalletList** walletList);
 Wallet* findWalletInWalletList(WalletList* walletList, char* walletId);
 
 Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned int balance, BitcoinList* bitcoinList);
+
+int handleWalletToWalletTransfer(Wallet* senderWallet, Wallet* receiverWallet, Transaction* transaction);
 
 #endif

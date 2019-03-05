@@ -1,8 +1,8 @@
 #include "bitcoin_tree_list.h"
 
-BitcoinTree* initBitcoinTree(int startAmount) {
+BitcoinTree* initBitcoinTree(int startAmount, char* walletId) {
     BitcoinTree* bitcoinTree = (BitcoinTree*)malloc(sizeof(BitcoinTree));
-    bitcoinTree->rootNode = initBitCoinTreeRootNode(startAmount);
+    bitcoinTree->rootNode = initBitcoinTreeNode(walletId, startAmount, NULL);
     bitcoinTree->size = 0;
     // bitcoinTree->nextBitcoinTree = NULL;
     // bitcoinTree->prevBitcoinTree = NULL;
@@ -22,29 +22,33 @@ BitcoinTreeNode* initBitcoinTreeNode(char* walletId, int amount, Transaction* tr
     return bitcoinTreeNode;
 }
 
-BitcoinTreeNode* initBitCoinTreeRootNode(int startAmount) {
-    BitcoinTreeNode* bitcoinTreeNode = malloc(sizeof(BitcoinTreeNode));
-    bitcoinTreeNode->walletId = NULL;
-    bitcoinTreeNode->amount = startAmount;
-    bitcoinTreeNode->receiverNode = NULL;
-    bitcoinTreeNode->remainingNode = NULL;
+// BitcoinTreeNode* initBitCoinTreeRootNode(int startAmount) {
+//     BitcoinTreeNode* bitcoinTreeNode = malloc(sizeof(BitcoinTreeNode));
+//     bitcoinTreeNode->walletId = NULL;
+//     bitcoinTreeNode->amount = startAmount;
+//     bitcoinTreeNode->receiverNode = NULL;
+//     bitcoinTreeNode->remainingNode = NULL;
 
-    return bitcoinTreeNode;
-}
+//     return bitcoinTreeNode;
+// }
 
 void freeBitcoinTreeNodeRec(BitcoinTreeNode** bitcoinTreeNode) {
-    if (bitcoinTreeNode == NULL)
+    if ((*bitcoinTreeNode) == NULL)
         return;
 
     freeBitcoinTreeNodeRec(&(*bitcoinTreeNode)->receiverNode);
     freeBitcoinTreeNodeRec(&(*bitcoinTreeNode)->remainingNode);
 
-    free((*bitcoinTreeNode)->walletId);
-    (*bitcoinTreeNode)->walletId = NULL;
+    if ((*bitcoinTreeNode)->walletId != NULL) {
+        free((*bitcoinTreeNode)->walletId);
+        (*bitcoinTreeNode)->walletId = NULL;
+    }
     if ((*bitcoinTreeNode)->transaction != NULL) {
         free((*bitcoinTreeNode)->transaction);
         (*bitcoinTreeNode)->transaction = NULL;
     }
+    (*bitcoinTreeNode)->receiverNode = NULL;
+    (*bitcoinTreeNode)->remainingNode = NULL;
     free(*bitcoinTreeNode);
     (*bitcoinTreeNode) = NULL;
 
@@ -52,7 +56,7 @@ void freeBitcoinTreeNodeRec(BitcoinTreeNode** bitcoinTreeNode) {
 }
 
 void freeBitcoinTree(BitcoinTree** bitcoinTree) {
-    if (bitcoinTree == NULL)
+    if ((*bitcoinTree) == NULL)
         return;
 
     freeBitcoinTreeNodeRec(&(*bitcoinTree)->rootNode);
@@ -81,6 +85,62 @@ BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, Bi
     return findBitcoinTreeNodeOfBitcoinTree(walletId, bitcoinAmount, nextBitcoinTreeNode->remainingNode);
 }
 
+void getTotalBitcoinBalanceOfWalletId(char* walletId, int* balance, BitcoinTreeNode* nextBitcoinTreeNode) {
+    if (nextBitcoinTreeNode == NULL)
+        return;
+
+    printf("before\n");
+    printf("nextBitcoinTreeNode->walletId: %s\n", nextBitcoinTreeNode->walletId);
+    printf("after\n");
+    if (nextBitcoinTreeNode->receiverNode == NULL && nextBitcoinTreeNode->remainingNode == NULL && strcmp(nextBitcoinTreeNode->walletId, walletId) == 0) {
+        (*balance) += nextBitcoinTreeNode->amount;
+    }
+
+    getTotalBitcoinBalanceOfWalletId(walletId, balance, nextBitcoinTreeNode->receiverNode);
+    getTotalBitcoinBalanceOfWalletId(walletId, balance, nextBitcoinTreeNode->remainingNode);
+
+    return;
+}
+
+void handleLog(char* walletId, Transaction* transaction, int* bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/) {
+    if (nextBitcoinTreeNode == NULL || (*bitcoinAmount) <= 0)
+        return;
+
+    int receiverBitcoinAmount = 0, remainingBitcoinAmount = 0;
+    if (nextBitcoinTreeNode->receiverNode == NULL && nextBitcoinTreeNode->remainingNode == NULL && strcmp(nextBitcoinTreeNode->walletId, walletId) == 0 /* && nextBitcoinTreeNode->amount >= bitcoinAmount*/) {
+        // BitcoinTreeNode* foundBitcoinTreeNode = findBitcoinTreeNodeForLog(transaction->receiverWalletId, transaction->amount, bitcoinTree->rootNode);
+
+        // if (foundBitcoinTreeNode == NULL) {
+        //     printf("Suitable node not found or insufficient bitcoin amount\n");
+        //     return 1;
+        // }
+
+        // if (foundBitcoinTreeNode->amount < amount) {
+        //     printf("Insufficient bitcoin amount\n");
+        //     return 1;
+        // }
+        receiverBitcoinAmount = nextBitcoinTreeNode->amount - (*bitcoinAmount) >= 0 ? (*bitcoinAmount) : nextBitcoinTreeNode->amount;
+        remainingBitcoinAmount = nextBitcoinTreeNode->amount - receiverBitcoinAmount;
+
+        nextBitcoinTreeNode->receiverNode = initBitcoinTreeNode(transaction->receiverWalletId,
+                                                                receiverBitcoinAmount,
+                                                                transaction);
+
+        if (remainingBitcoinAmount > 0) {  // maybe remove this condition
+            nextBitcoinTreeNode->remainingNode = initBitcoinTreeNode(transaction->senderWalletId,
+                                                                     remainingBitcoinAmount,
+                                                                     NULL);
+        }
+    }
+
+    (*bitcoinAmount) = (*bitcoinAmount) - receiverBitcoinAmount;
+
+    handleLog(walletId, transaction, bitcoinAmount, nextBitcoinTreeNode->receiverNode);
+    handleLog(walletId, transaction, bitcoinAmount, nextBitcoinTreeNode->remainingNode);
+
+    return;
+}
+
 void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode) {
     if (nextBitcoinTreeNode == NULL)
         return;
@@ -89,8 +149,10 @@ void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, Bitcoin
         addTransactionToTransactionListSorted(foundTransactionList, nextBitcoinTreeNode->transaction);
     }
 
-    return getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->receiverNode);
-    return getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->remainingNode);
+    getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->receiverNode);
+    getTransactionsOfBitcoinTree(foundTransactionList, nextBitcoinTreeNode->remainingNode);
+
+    return;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +179,6 @@ void freeBitcoinListNode(BitcoinListNode** bitcoinListNode) {
         return;
 
     freeBitcoinTree(&(*bitcoinListNode)->bitcoinTree);
-    (*bitcoinListNode)->bitcoinTree = NULL;
     (*bitcoinListNode)->nextNode = NULL;
     (*bitcoinListNode)->prevNode = NULL;
     free(*bitcoinListNode);
@@ -190,7 +251,6 @@ void freeBitcoinList(BitcoinList** bitcoinList) {
     // Bucket* curBucket = (*bitcoinList)->firstBucket;
 
     freeBitcoinListNodeRec(&(*bitcoinList)->firstNode);
-    (*bitcoinList)->firstNode = NULL;
 
     free(*bitcoinList);
     (*bitcoinList) = NULL;
@@ -215,9 +275,13 @@ BitcoinListNode* findBitcoinListNodeInBitcoinList(BitcoinList* bitcoinList, int 
     return NULL;
 }
 
-BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, int bitcoinId, int startAmount) {
+BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char* walletId, int bitcoinId, int startAmount) {
+    if (findBitcoinListNodeInBitcoinList(bitcoinList, bitcoinId) != NULL) {
+        return NULL;
+    }
+
     if (bitcoinList->size == 0) {
-        bitcoinList->firstNode = initBitcoinListNode(initBitcoinTree(startAmount));
+        bitcoinList->firstNode = initBitcoinListNode(initBitcoinTree(startAmount, walletId));
 
         bitcoinList->size++;
         printf("Inserted |%d| to BitcoinList\n\n", bitcoinId);
@@ -227,7 +291,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, int b
 
         if (bitcoinId < curBitcoinListNode->bitcoinTree->bitcoinId) {
             // insert at start
-            BitcoinListNode* bitcoinListNodeToInsert = initBitcoinListNode(initBitcoinTree(startAmount));
+            BitcoinListNode* bitcoinListNodeToInsert = initBitcoinListNode(initBitcoinTree(startAmount, walletId));
             bitcoinListNodeToInsert->nextNode = curBitcoinListNode;
 
             curBitcoinListNode->prevNode = bitcoinListNodeToInsert;
@@ -239,7 +303,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, int b
         while (curBitcoinListNode != NULL) {
             if (curBitcoinListNode->nextNode != NULL) {
                 if (bitcoinId < curBitcoinListNode->nextNode->bitcoinTree->bitcoinId) {
-                    BitcoinListNode* bitcoinListNodeToInsert = initBitcoinListNode(initBitcoinTree(startAmount));
+                    BitcoinListNode* bitcoinListNodeToInsert = initBitcoinListNode(initBitcoinTree(startAmount, walletId));
                     bitcoinListNodeToInsert->prevNode = curBitcoinListNode;
                     bitcoinListNodeToInsert->nextNode = curBitcoinListNode->nextNode;
 
@@ -251,11 +315,66 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, int b
                 }
             } else {
                 // insert at the end
-                curBitcoinListNode->nextNode = initBitcoinListNode(initBitcoinTree(startAmount));
+                curBitcoinListNode->nextNode = initBitcoinListNode(initBitcoinTree(startAmount, walletId));
                 curBitcoinListNode->nextNode->prevNode = curBitcoinListNode;
 
                 bitcoinList->size++;
                 printf("Inserted |%d| to BitcoinList\n\n", bitcoinId);
+                return curBitcoinListNode->nextNode;
+            }
+
+            curBitcoinListNode = curBitcoinListNode->nextNode;
+        }
+    }
+
+    return NULL;  // not normal behavior
+}
+
+BitcoinListNode* addBitcoinListNodeToBitcoinListByPointer(BitcoinList* bitcoinList, BitcoinListNode* bitcoinListNode) {
+    if (findBitcoinListNodeInBitcoinList(bitcoinList, bitcoinListNode->bitcoinTree->bitcoinId) != NULL) {
+        return NULL;
+    }
+
+    if (bitcoinList->size == 0) {
+        bitcoinList->firstNode = bitcoinListNode;
+
+        bitcoinList->size++;
+        printf("Inserted |%d| to BitcoinList\n\n", bitcoinListNode->bitcoinTree->bitcoinId);
+        return bitcoinList->firstNode;
+    } else {
+        BitcoinListNode* curBitcoinListNode = bitcoinList->firstNode;
+
+        if (bitcoinListNode->bitcoinTree->bitcoinId < curBitcoinListNode->bitcoinTree->bitcoinId) {
+            // insert at start
+            BitcoinListNode* bitcoinListNodeToInsert = bitcoinListNode;
+            bitcoinListNodeToInsert->nextNode = curBitcoinListNode;
+
+            curBitcoinListNode->prevNode = bitcoinListNodeToInsert;
+            bitcoinList->firstNode = bitcoinListNodeToInsert;
+            bitcoinList->size++;
+            printf("Inserted |%d| to BitcoinList\n\n", bitcoinListNode->bitcoinTree->bitcoinId);
+            return bitcoinList->firstNode;
+        }
+        while (curBitcoinListNode != NULL) {
+            if (curBitcoinListNode->nextNode != NULL) {
+                if (bitcoinListNode->bitcoinTree->bitcoinId < curBitcoinListNode->nextNode->bitcoinTree->bitcoinId) {
+                    BitcoinListNode* bitcoinListNodeToInsert = bitcoinListNode;
+                    bitcoinListNodeToInsert->prevNode = curBitcoinListNode;
+                    bitcoinListNodeToInsert->nextNode = curBitcoinListNode->nextNode;
+
+                    curBitcoinListNode->nextNode->prevNode = bitcoinListNodeToInsert;
+                    curBitcoinListNode->nextNode = bitcoinListNodeToInsert;
+                    bitcoinList->size++;
+                    printf("Inserted |%d| to BitcoinList\n\n", bitcoinListNode->bitcoinTree->bitcoinId);
+                    return curBitcoinListNode->nextNode;
+                }
+            } else {
+                // insert at the end
+                curBitcoinListNode->nextNode = bitcoinListNode;
+                curBitcoinListNode->nextNode->prevNode = curBitcoinListNode;
+
+                bitcoinList->size++;
+                printf("Inserted |%d| to BitcoinList\n\n", bitcoinListNode->bitcoinTree->bitcoinId);
                 return curBitcoinListNode->nextNode;
             }
 
@@ -273,7 +392,7 @@ int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId
     BitcoinListNode* bitcoinListNodeToDelete = findBitcoinListNodeInBitcoinList(bitcoinList, bitcoinId);
 
     if (bitcoinListNodeToDelete == NULL) {
-        printf("Name node with name %d not found in names' list\n", bitcoinId);
+        printf("Bitcoin list node with id %d not found in names' list\n", bitcoinId);
         return -1;
     }
 
@@ -287,7 +406,7 @@ int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId
         bitcoinListNodeToDelete->nextNode->prevNode = bitcoinListNodeToDelete->prevNode;
     }
 
-    freeBitcoinListNode(&bitcoinListNodeToDelete);
+    // freeBitcoinListNode(&bitcoinListNodeToDelete);
     bitcoinList->size--;
 
     return 0;
@@ -295,24 +414,26 @@ int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId
 
 ///////////////////////////////////////////////
 
-int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction) {
-    BitcoinTreeNode* foundBitcoinTreeNode = findBitcoinTreeNodeForLog(transaction->receiverWalletId, transaction->amount, bitcoinTree->rootNode);
+int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int* amount) {
+    // BitcoinTreeNode* foundBitcoinTreeNode = findBitcoinTreeNodeForLog(transaction->receiverWalletId, transaction->amount, bitcoinTree->rootNode);
 
-    if (foundBitcoinTreeNode == NULL) {
-        printf("Suitable node not found or insufficient bitcoin amount\n");
-        return 1;
-    }
-
-    // if (foundBitcoinTreeNode->amount < amount) {
-    //     printf("Insufficient bitcoin amount\n");
+    // if (foundBitcoinTreeNode == NULL) {
+    //     printf("Suitable node not found or insufficient bitcoin amount\n");
     //     return 1;
     // }
 
-    foundBitcoinTreeNode->receiverNode = initBitcoinTreeNode(transaction->receiverWalletId, transaction->amount, transaction);
+    // // if (foundBitcoinTreeNode->amount < amount) {
+    // //     printf("Insufficient bitcoin amount\n");
+    // //     return 1;
+    // // }
 
-    if (foundBitcoinTreeNode->amount > transaction->amount) {
-        foundBitcoinTreeNode->remainingNode = initBitcoinTreeNode(transaction->senderWalletId, foundBitcoinTreeNode->amount - transaction->amount, NULL);
-    }
+    // foundBitcoinTreeNode->receiverNode = initBitcoinTreeNode(transaction->receiverWalletId, transaction->amount, transaction);
+
+    // if (foundBitcoinTreeNode->amount > transaction->amount) {
+    //     foundBitcoinTreeNode->remainingNode = initBitcoinTreeNode(transaction->senderWalletId, foundBitcoinTreeNode->amount - transaction->amount, NULL);
+    // }
+
+    handleLog(transaction->senderWalletId, transaction, amount, bitcoinTree->rootNode);
 
     return 0;
 }
@@ -355,4 +476,11 @@ int getUnspentAmountOfBitcoinByTree(BitcoinTree* bitcoinTree) {
     }
 
     return curBitcoinTreeNode->amount;
+}
+
+int getCurrentBitcoinBalanceOfWalletId(BitcoinTree* bitcoinTree, char* walletId) {
+    int balance;
+    getTotalBitcoinBalanceOfWalletId(walletId, &balance, bitcoinTree->rootNode);
+
+    return balance;
 }
