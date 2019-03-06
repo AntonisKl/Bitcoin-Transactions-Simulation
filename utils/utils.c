@@ -421,7 +421,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
         // return;
         return;
     }
-    Wallet* foundReceiverWallet = findWalletInWalletList(walletList, senderWalletId);
+    Wallet* foundReceiverWallet = findWalletInWalletList(walletList, receiverWalletId);
     if (foundReceiverWallet == NULL) {
         printf("receiver wallet id does not exist\n");
         // return;
@@ -436,7 +436,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
     }
     printf("hello1\n");
 
-    printf("sender wallet balance: %d, amount: %d\n", foundReceiverWallet->balance, bitcoinAmount);
+    printf("sender wallet balance: %d, amount: %d\n", foundSenderWallet->balance, bitcoinAmount);
 
     if (foundSenderWallet->balance < bitcoinAmount) {
         printf("Insufficient balance\n");
@@ -593,7 +593,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
 void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList) {
     printf("in free memory\n");
     freeHashTable(senderHashTable);
-    freeHashTable(receiverHashTable);
+    freeHashTable(receiverHashTable); // double free
     freeBitcoinList(bitcoinList);
     freeWalletList(walletList);
 

@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     handleTransactionsFile(transactionsFileName, &senderHashTable, &receiverHashTable, bitcoinList, walletList,
                            senderHashTableSize, receiverHashTableSize, bucketSize);
 
-    handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList);
+    // handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList);
 
     freeMemory(&senderHashTable, &receiverHashTable, &bitcoinList, &walletList);
 }
