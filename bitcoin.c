@@ -6,6 +6,7 @@ int main(int argc, char** argv) {
 
     char *bitcoinBalancesFileName, *transactionsFileName;
     int bitcoinValue, senderHashTableSize, receiverHashTableSize, bucketSizeBytes;
+    time_t lastTransactionTimestamp = 0;
 
     handleArgs(argc, argv, &bitcoinBalancesFileName, &transactionsFileName, &bitcoinValue, &senderHashTableSize, &receiverHashTableSize, &bucketSizeBytes);
 
@@ -17,9 +18,9 @@ int main(int argc, char** argv) {
 
     handleBitcoinBalancesFile(bitcoinBalancesFileName, &walletList, &bitcoinList, bitcoinValue);
     handleTransactionsFile(transactionsFileName, &senderHashTable, &receiverHashTable, bitcoinList, walletList,
-                           senderHashTableSize, receiverHashTableSize, bucketSize);
+                           senderHashTableSize, receiverHashTableSize, bucketSize, &lastTransactionTimestamp);
 
-    // handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList);
+    handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList, &lastTransactionTimestamp);
 
     freeMemory(&senderHashTable, &receiverHashTable, &bitcoinList, &walletList);
 }

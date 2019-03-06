@@ -66,12 +66,12 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
 
 void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinList** bitcoinList, int bitcoinValue);
 
-void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId);
+void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId, time_t* lastTransactionTimestamp);
 
 void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
-                            int senderHashTableSize, int receiverHashTableSize, int bucketSize);
+                            int senderHashTableSize, int receiverHashTableSize, int bucketSize, time_t* lastTransactionTimestamp);
 
-void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList);
+void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, time_t* lastTransactionTimestamp);
 
 void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList);
 

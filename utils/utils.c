@@ -341,7 +341,7 @@ void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinL
     return;
 }
 
-void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId) {
+void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId, time_t* lastTransactionTimestamp) {
     int bitcoinAmount;
     char *endptr, *token, *transactionId, *senderWalletId, *receiverWalletId, dateTimeS[MAX_DATETIME_SIZE];
     char idS[MAX_STRING_INT_SIZE];
@@ -412,6 +412,13 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
     }
     // strcpy(transactionId, strtok(transactionS, " "));
     printf("transaction id, datetimeS: %s, %s\n\n", transactionId, dateTimeS);
+    time_t curTransactionTimestamp = datetimeStringToTimeStamp(dateTimeS);
+    if (curTransactionTimestamp < (*lastTransactionTimestamp)) { // < : because the precision is in minutes
+        printf("Transaction date is old\n");
+        return;
+    } else {
+        (*lastTransactionTimestamp) = curTransactionTimestamp;
+    }
 
     printf("sender id: |%s|\n", senderWalletId);
 
@@ -460,7 +467,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
 }
 
 void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
-                            int senderHashTableSize, int receiverHashTableSize, int bucketSize) {
+                            int senderHashTableSize, int receiverHashTableSize, int bucketSize, time_t* lastTransactionTimestamp) {
     (*senderHashTable) = initHashTable(senderHashTableSize, bucketSize);
     (*receiverHashTable) = initHashTable(receiverHashTableSize, bucketSize);
 
@@ -473,7 +480,7 @@ void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTab
     }
 
     while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
-        handleTransactionString(line, walletList, (*senderHashTable), (*receiverHashTable), 1);
+        handleTransactionString(line, walletList, (*senderHashTable), (*receiverHashTable), 1, lastTransactionTimestamp);
         // char* endptr;
 
         // token = strtok(line, " ");
@@ -549,7 +556,7 @@ void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTab
     fclose(fileP);
 }
 
-void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList) {
+void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, time_t* lastTransactionTimestamp) {
     char inputS[MAX_INPUT_SIZE], *token;
 
     fgets(inputS, MAX_INPUT_SIZE, stdin);
@@ -563,11 +570,11 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
     while (strcmp(token, "./exit\n") != 0) {
         printf("token: %s\n", token);
         if (!strcmp(token, "./requestTransaction")) {
-            handleTransactionString(strtok(NULL, "\n"), walletList, senderHashTable, receiverHashTable, 0);
+            handleTransactionString(strtok(NULL, "\n"), walletList, senderHashTable, receiverHashTable, 0, lastTransactionTimestamp);
         } else if (!strcmp(token, "./requestTransactions")) {
             token = strtok(NULL, ";");
             while (token != NULL) {
-                handleTransactionString(token, walletList, senderHashTable, receiverHashTable, 0);
+                handleTransactionString(token, walletList, senderHashTable, receiverHashTable, 0, lastTransactionTimestamp);
             }
         } else if (!strcmp(token, "./findEarnings")) {
         } else if (!strcmp(token, "./findPayments")) {
