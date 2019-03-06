@@ -2,8 +2,10 @@
 
 //////////////////////////////////////////////////////////////////////////////// START OF TRANSACTION ///////////////////////////////////////////////////////////////
 
-Transaction* initTransaction(char* transactionId, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList) {  // bitcoinList will be already initialized
+Transaction* initTransaction(char* transactionId, int amount, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList) {  // bitcoinList will be already initialized
     Transaction* transaction = (Transaction*)malloc(sizeof(Transaction));
+
+    transaction->amount = amount;
 
     transaction->transactionId = (char*)malloc(MAX_TRANSACTION_ID_SIZE);
     strcpy(transaction->transactionId, transactionId);
@@ -21,6 +23,8 @@ Transaction* initTransaction(char* transactionId, char* senderWalletId, char* re
 
     // transaction->bitcoinList = initBitcoinList();
     transaction->bitcoinList = bitcoinList;
+
+    transaction->nextTransaction = NULL;
 
     return transaction;
 }
@@ -570,25 +574,35 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
 
 Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId) {
     for (int i = 0; i < hashTable->bucketListArraySize; i++) {
+        printf("i=%d\n", i);
         BucketList* curBucketList = hashTable->bucketLists[i];
-        if (curBucketList == NULL)
+        if (curBucketList == NULL) {
+            printf("continue\n");
             continue;
-
+        }
         Bucket* curBucket = curBucketList->firstBucket;
         while (curBucket != NULL) {
             for (int j = 0; j < curBucket->nextIndex; j++) {
+                printf("j=%d, index=%d\n", j, curBucket->nextIndex);
+
                 TransactionList* curTransactionList = curBucket->transactionLists[j];
+
                 Transaction* curTransaction = curTransactionList->firstTransaction;
                 while (curTransaction != NULL) {
+                    printf("while, curid=%s\n", curTransaction->transactionId);
                     if (strcmp(curTransaction->transactionId, transactionId) == 0) {
                         return curTransaction;
                     }
+                    printf("hey\n");
                     curTransaction = curTransaction->nextTransaction;
+                                    printf("hey1.5\n");
                 }
+                printf("hey1\n");
             }
             curBucket = curBucket->nextBucket;
         }
     }
+    printf("eeee\n");
 
     return NULL;
 }

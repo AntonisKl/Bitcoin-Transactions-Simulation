@@ -16,7 +16,8 @@
 
 #define MAX_WALLET_ID_SIZE 50
 #define MAX_TRANSACTION_ID_SIZE 50
-#define MAX_DATETIME_SIZE 15
+#define MAX_DATETIME_SIZE 17
+#define MAX_BIG_DATETIME_SIZE 27
 #define MAX_FILE_LINE_SIZE 100
 #define MAX_INPUT_SIZE 100
 #define MAX_STRING_INT_SIZE 12    // including end of string
@@ -57,6 +58,9 @@
 typedef struct HashTable HashTable;
 typedef struct WalletList WalletList;
 
+time_t datetimeStringToTimeStamp(char* datetimeS);
+void timestampToDatetimeString(time_t timestamp, char (*datetimeS)[MAX_DATETIME_SIZE]);
+
 void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** transactionsFileName, int* bitcoinValue, int* senderHashTableSize,
                 int* receiverHashTableSize, int* bucketSizeBytes);
 
@@ -67,8 +71,8 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
 void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
                             int senderHashTableSize, int receiverHashTableSize, int bucketSize);
 
-void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList);
+void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList);
 
-time_t datetimeStringToTimeStamp(char* datetimeS);
+void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList);
 
 #endif

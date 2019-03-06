@@ -103,8 +103,11 @@ void getTotalBitcoinBalanceOfWalletId(char* walletId, int* balance, BitcoinTreeN
 }
 
 void handleLog(char* walletId, Transaction* transaction, int* bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/) {
+        printf("handleLog: 0\n");
     if (nextBitcoinTreeNode == NULL || (*bitcoinAmount) <= 0)
         return;
+
+    printf("handleLog: 1\n");
 
     int receiverBitcoinAmount = 0, remainingBitcoinAmount = 0;
     if (nextBitcoinTreeNode->receiverNode == NULL && nextBitcoinTreeNode->remainingNode == NULL && strcmp(nextBitcoinTreeNode->walletId, walletId) == 0 /* && nextBitcoinTreeNode->amount >= bitcoinAmount*/) {
@@ -119,21 +122,27 @@ void handleLog(char* walletId, Transaction* transaction, int* bitcoinAmount, Bit
         //     printf("Insufficient bitcoin amount\n");
         //     return 1;
         // }
-        receiverBitcoinAmount = nextBitcoinTreeNode->amount - (*bitcoinAmount) >= 0 ? (*bitcoinAmount) : nextBitcoinTreeNode->amount;
+                printf("handleLog: 2\n");
+        receiverBitcoinAmount = (nextBitcoinTreeNode->amount - (*bitcoinAmount)) >= 0 ? (*bitcoinAmount) : nextBitcoinTreeNode->amount;
         remainingBitcoinAmount = nextBitcoinTreeNode->amount - receiverBitcoinAmount;
 
         nextBitcoinTreeNode->receiverNode = initBitcoinTreeNode(transaction->receiverWalletId,
                                                                 receiverBitcoinAmount,
                                                                 transaction);
+        printf("handleLog: 3\n");
 
         if (remainingBitcoinAmount > 0) {  // maybe remove this condition
             nextBitcoinTreeNode->remainingNode = initBitcoinTreeNode(transaction->senderWalletId,
                                                                      remainingBitcoinAmount,
                                                                      NULL);
         }
-    }
 
-    (*bitcoinAmount) = (*bitcoinAmount) - receiverBitcoinAmount;
+                printf("handleLog: 3.5\n");
+    }
+        printf("handleLog: 4\n");
+
+    (*bitcoinAmount) -= receiverBitcoinAmount;
+    printf("bitcoinAmount = %d\n", *bitcoinAmount);
 
     handleLog(walletId, transaction, bitcoinAmount, nextBitcoinTreeNode->receiverNode);
     handleLog(walletId, transaction, bitcoinAmount, nextBitcoinTreeNode->remainingNode);
@@ -476,6 +485,7 @@ int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int*
     // if (foundBitcoinTreeNode->amount > transaction->amount) {
     //     foundBitcoinTreeNode->remainingNode = initBitcoinTreeNode(transaction->senderWalletId, foundBitcoinTreeNode->amount - transaction->amount, NULL);
     // }
+    printf("addLogToBitcoinTree\n");
 
     handleLog(transaction->senderWalletId, transaction, amount, bitcoinTree->rootNode);
 

@@ -4,6 +4,9 @@
         "bitcoin_tree&list.h": "c",
         "bitcoin_tree_list.h": "c",
         "utils.h": "c",
-        "hashtable.h": "c"
+        "hashtable.h": "c",
+        "wallet_list.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }

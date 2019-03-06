@@ -9,7 +9,7 @@ typedef struct Transaction Transaction;
 
 typedef struct Wallet {
     char* walletId;
-    unsigned int balance; // represents dollars
+    int balance; // represents dollars
     BitcoinList* bitcoinList; // bitcoins owned by this user
     struct Wallet* nextWallet;
 } Wallet;

@@ -43,7 +43,7 @@ typedef enum HashTableType {
 } HashTableType;
 
 // Transaction
-Transaction* initTransaction(char* transactionId, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList);
+Transaction* initTransaction(char* transactionId, int amount, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList);
 
 void freeTransaction(Transaction** transaction);
 
