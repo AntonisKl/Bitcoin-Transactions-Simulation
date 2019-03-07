@@ -19,8 +19,10 @@
 #define MAX_DATETIME_SIZE 17
 #define MAX_BIG_DATETIME_SIZE 27
 #define MAX_FILE_LINE_SIZE 100
-#define MAX_INPUT_SIZE 100
+#define MAX_INPUT_SIZE 500
 #define MAX_STRING_INT_SIZE 12    // including end of string
+#define MAX_TIME_SIZE 6
+#define MAX_DATE_SIZE 11
 
 // Bitcoin
 
@@ -58,6 +60,20 @@
 typedef struct HashTable HashTable;
 typedef struct WalletList WalletList;
 
+void removeSpaces(char* str);
+
+void timeStringToHourMinute(char* timeS, int* hour, int* minute);
+
+char validateTimeS(char* timeS);
+
+char compareTimesS(char* time1, char* time2);  // considers time string valid
+
+void dateStringToDayMonthYear(char* timeS, int* day, int* month, int* year);
+
+char validateDateS(char* dateS);
+
+char compareDatesS(char* date1, char* date2);
+
 time_t datetimeStringToTimeStamp(char* datetimeS);
 void timestampToDatetimeString(time_t timestamp, char (*datetimeS)[MAX_DATETIME_SIZE]);
 
@@ -68,8 +84,8 @@ void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinL
 
 void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId, time_t* lastTransactionTimestamp);
 
-void handleTransactionsFile(char* fileName, HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
-                            int senderHashTableSize, int receiverHashTableSize, int bucketSize, time_t* lastTransactionTimestamp);
+void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
+                            time_t* lastTransactionTimestamp);
 
 void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, time_t* lastTransactionTimestamp);
 

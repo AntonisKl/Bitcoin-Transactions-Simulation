@@ -30,7 +30,7 @@ typedef struct BitcoinList { // all the bitcoins that exist
     unsigned int size;
 } BitcoinList;
 
-BitcoinTree* initBitcoinTree(int startAmount, char* walletId);
+BitcoinTree* initBitcoinTree(int startAmount, char* walletId, int bitcoinId);
 
 BitcoinTreeNode* initBitcoinTreeNode(char* walletId, int amount, Transaction* transaction);
 
@@ -46,6 +46,8 @@ BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, Bi
 
 void getTotalBitcoinBalanceOfWalletId(char* walletId, int* balance, BitcoinTreeNode* nextBitcoinTreeNode);
 
+void getTransactionsNumOfBitcoin(int* transactionsNum, BitcoinTreeNode* nextBitcoinTreeNode);
+
 void handleLog(char* walletId, Transaction* transaction, int* bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
 void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode);
@@ -56,17 +58,11 @@ BitcoinList* initBitcoinList();
 
 BitcoinListNode* initBitcoinListNode(BitcoinTree* bitcoinTree);
 
-void freeBitcoinListNode(BitcoinListNode** bitcoinListNode);
+void freeBitcoinListNode(BitcoinListNode** bitcoinListNode,  char shouldFreeBitcoinTrees);
 
-void freeBitcoinListNodeNoTree(BitcoinListNode** bitcoinListNode);
+void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode, char shouldFreeBitcoinTrees);
 
-void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode);
-
-void freeBitcoinListNodeRecNoTree(BitcoinListNode** bitcoinListNode);
-
-void freeBitcoinList(BitcoinList** bitcoinList);
-
-void freeBitcoinListNoTrees(BitcoinList** bitcoinList);
+void freeBitcoinList(BitcoinList** bitcoinList,  char shouldFreeBitcoinTrees);
 
 BitcoinListNode* findBitcoinListNodeInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
@@ -88,5 +84,9 @@ int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId);
 int getUnspentAmountOfBitcoinByTree(BitcoinTree* bitcoinTree);
 
 int getCurrentBitcoinBalanceOfWalletId(BitcoinTree* bitcoinTree, char* walletId);
+
+int getTransactionsNumOfBitcoinById(BitcoinList* bitcoinList, int bitcoinId);
+
+void getTransactionsOfBitcoin(BitcoinList* bitcoinList, int bitcoinId, TransactionList* foundTransactionList);
 
 #endif

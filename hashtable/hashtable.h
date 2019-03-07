@@ -51,9 +51,9 @@ TransactionList* initTransactionList(char* walletId);
 
 TransactionList** initTransactionListArray(unsigned int size);
 
-void freeTransactionList(TransactionList** transactionList);
+void freeTransactionList(TransactionList** transactionList, char shoudFreeTransactions);
 
-void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size);
+void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size, char shoudFreeTransactions);
 
 // Bucket* findBucketInTransactionList(TransactionList* transactionList, char* name) {
 //     if (transactionList == NULL)
@@ -84,7 +84,7 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
 // Bucket
 Bucket* initBucket(unsigned int bucketSize);
 
-void freeBucketRec(HashTable* hashTable, Bucket** bucket);
+void freeBucketRec(HashTable* hashTable, Bucket** bucket, char shoudFreeTransactions);
 
 Transaction* addTransactionToBucketList(HashTable* hashTable, unsigned int listIndex, Transaction* transaction);
 
@@ -92,9 +92,9 @@ BucketList** initBucketListArray(unsigned int size);
 
 BucketList* initBucketList();
 
-void freeBucketList(HashTable* hashTable, BucketList** bucketList);
+void freeBucketList(HashTable* hashTable, BucketList** bucketList, char shoudFreeTransactions);
 
-void freeBucketListArray(HashTable* hashTable, BucketList*** bucketLists, unsigned int size);
+void freeBucketListArray(HashTable* hashTable, BucketList*** bucketLists, unsigned int size, char shoudFreeTransactions);
 
 Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSize);
 // end
@@ -102,7 +102,7 @@ Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSi
 // Hash Table
 HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSize);
 
-void freeHashTable(HashTable** hashTable);
+void freeHashTable(HashTable** hashTable, char shoudFreeTransactions);
 
 unsigned int hashFunction(HashTable* hashTable, char* walletId);
 
@@ -111,6 +111,13 @@ char* getWalletIdByHashTableType(Transaction* transaction, HashTableType type);
 Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction, HashTableType hashTableType);
 
 Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId);
+Transaction* printTransactionsInHashTable(HashTable* hashTable);
+
+TransactionList* findTransactionListInHashTable(HashTable* hashTable, char* walletId);
+
+void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings);
+
+void printTransactionsOfTransactionListSimple(TransactionList* transactionList);
 // end
 
 #endif

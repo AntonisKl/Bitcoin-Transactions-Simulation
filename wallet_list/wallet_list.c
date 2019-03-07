@@ -27,7 +27,7 @@ void freeWallet(Wallet** wallet) {
     free((*wallet)->walletId);
     (*wallet)->walletId = NULL;
 
-    freeBitcoinListNoTrees(&(*wallet)->bitcoinList);  ////////////////////////////////// THIS CAUSES FREE ERROR
+    freeBitcoinList(&(*wallet)->bitcoinList, 0);  ////////////////////////////////// THIS CAUSES FREE ERROR
 
     (*wallet)->nextWallet = NULL;
 
@@ -215,6 +215,16 @@ int handleWalletToWalletTransfer(Wallet* senderWallet, Wallet* receiverWallet, T
     printf("balances: %d, %d\n", senderWallet->balance, receiverWallet->balance);
 
     return 0;
+}
+
+int getCurrentBalanceOfWallet(WalletList* walletList, char* walletId) {
+    Wallet* foundWallet = findWalletInWalletList(walletList, walletId);
+    if (foundWallet == NULL) {
+        printf("Wallet not found\n");
+        return -1;
+    }
+
+    return foundWallet->balance;
 }
 
 // int deleteWalletFromWalletList(WalletList* walletList, char* name) {

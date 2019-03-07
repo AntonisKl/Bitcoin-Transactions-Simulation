@@ -35,4 +35,6 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
 
 int handleWalletToWalletTransfer(Wallet* senderWallet, Wallet* receiverWallet, Transaction* transaction);
 
+int getCurrentBalanceOfWallet(WalletList* walletList, char* walletId);
+
 #endif

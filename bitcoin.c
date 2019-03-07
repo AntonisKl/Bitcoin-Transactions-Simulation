@@ -16,9 +16,20 @@ int main(int argc, char** argv) {
     BitcoinList* bitcoinList;
     WalletList* walletList;
 
+    senderHashTable = initHashTable(senderHashTableSize, bucketSize);
+    receiverHashTable = initHashTable(receiverHashTableSize, bucketSize);
+
     handleBitcoinBalancesFile(bitcoinBalancesFileName, &walletList, &bitcoinList, bitcoinValue);
-    handleTransactionsFile(transactionsFileName, &senderHashTable, &receiverHashTable, bitcoinList, walletList,
-                           senderHashTableSize, receiverHashTableSize, bucketSize, &lastTransactionTimestamp);
+
+    // BitcoinListNode* curNode = bitcoinList->firstNode;
+    // while (curNode != NULL) {
+    //     printf("curnode bitcoin id: %d\n", curNode->bitcoinTree->bitcoinId);
+    //     curNode = curNode->nextNode;
+    // }
+
+    handleTransactionsFile(transactionsFileName, senderHashTable, receiverHashTable, bitcoinList, walletList, &lastTransactionTimestamp);
+    printf("LAST TIMESTAMP: %ld\n", lastTransactionTimestamp);
+    printTransactionsInHashTable(senderHashTable);
 
     handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList, &lastTransactionTimestamp);
 
