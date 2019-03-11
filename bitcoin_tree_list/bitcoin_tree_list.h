@@ -30,15 +30,17 @@ typedef struct BitcoinList { // all the bitcoins that exist
     unsigned int size;
 } BitcoinList;
 
+// Bitcoin Tree
+
 BitcoinTree* initBitcoinTree(int startAmount, char* walletId, int bitcoinId);
 
 BitcoinTreeNode* initBitcoinTreeNode(char* walletId, int amount, Transaction* transaction);
 
 // BitcoinTreeNode* initBitCoinTreeRootNode(int startAmount);
 
-void freeBitcoinTreeNodeRec(BitcoinTreeNode** bitcoinTreeNode);
+void freeBitcoinTreeNodeRec(BitcoinTreeNode** bitcoinTreeNode, char shouldFreeTransactions);
 
-void freeBitcoinTree(BitcoinTree** bitcoinTree);
+void freeBitcoinTree(BitcoinTree** bitcoinTree, char shouldFreeTransactions);
 
 BitcoinTreeNode* findBitcoinTreeNodeOfBitcoinTree(char* walletId, int amount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
@@ -46,34 +48,37 @@ BitcoinTreeNode* findBitcoinTreeNodeForLog(char* walletId, int bitcoinAmount, Bi
 
 void getTotalBitcoinBalanceOfWalletId(char* walletId, int* balance, BitcoinTreeNode* nextBitcoinTreeNode);
 
-void getTransactionsNumOfBitcoin(int* transactionsNum, BitcoinTreeNode* nextBitcoinTreeNode);
+void getTransactionsNumOfBitcoin(int* transactionsNum, TransactionList* foundTransactionsList, BitcoinTreeNode* nextBitcoinTreeNode);
 
 void handleLog(char* walletId, Transaction* transaction, int* bitcoinAmount, BitcoinTreeNode* nextBitcoinTreeNode /*= rootNode initially*/);
 
 void getTransactionsOfBitcoinTree(TransactionList* foundTransactionList, BitcoinTreeNode* nextBitcoinTreeNode);
 
-///////////////////////////////////////////////
+// End
+
+// Bitcoin List
 
 BitcoinList* initBitcoinList();
 
 BitcoinListNode* initBitcoinListNode(BitcoinTree* bitcoinTree);
 
-void freeBitcoinListNode(BitcoinListNode** bitcoinListNode,  char shouldFreeBitcoinTrees);
+void freeBitcoinListNode(BitcoinListNode** bitcoinListNode,  char shouldFreeBitcoinTrees, char shouldFreeTransactions);
 
-void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode, char shouldFreeBitcoinTrees);
+void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode, char shouldFreeBitcoinTrees, char shouldFreeTransactions);
 
-void freeBitcoinList(BitcoinList** bitcoinList,  char shouldFreeBitcoinTrees);
+void freeBitcoinList(BitcoinList** bitcoinList,  char shouldFreeBitcoinTrees, char shouldFreeTransactions);
 
 BitcoinListNode* findBitcoinListNodeInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
 BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char* walletId, int bitcoinId, int startAmount);
 
-BitcoinListNode* addBitcoinListNodeToBitcoinListByPointer(BitcoinList* bitcoinList, BitcoinListNode* bitcoinListNode);
+BitcoinListNode* addBitcoinListNodeToBitcoinListByPointer(BitcoinList* bitcoinList, BitcoinListNode* bitcoinListNode, char* receiverWalletId);
 
 int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
 
-///////////////////////////////////////////////
-// high level functions
+// End
+
+// High level functions
 
 int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int* amount);
 
@@ -88,5 +93,7 @@ int getCurrentBitcoinBalanceOfWalletId(BitcoinTree* bitcoinTree, char* walletId)
 int getTransactionsNumOfBitcoinById(BitcoinList* bitcoinList, int bitcoinId);
 
 void getTransactionsOfBitcoin(BitcoinList* bitcoinList, int bitcoinId, TransactionList* foundTransactionList);
+
+// End
 
 #endif

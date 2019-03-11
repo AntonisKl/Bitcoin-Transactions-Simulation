@@ -19,7 +19,7 @@ typedef struct WalletList {
     unsigned int size;
 } WalletList;
 
-WalletList* initWalletList();
+// Wallet
 
 Wallet* initWallet(char* walletId, unsigned int balance, BitcoinList* bitcoinList);
 
@@ -27,14 +27,26 @@ void freeWallet(Wallet** wallet);
 
 void freeWalletRec(Wallet** wallet);
 
+// End
+
+// Wallet List
+
+WalletList* initWalletList();
+
 void freeWalletList(WalletList** walletList);
 
 Wallet* findWalletInWalletList(WalletList* walletList, char* walletId);
 
 Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned int balance, BitcoinList* bitcoinList);
 
+// End
+
+// High level functions
+
 int handleWalletToWalletTransfer(Wallet* senderWallet, Wallet* receiverWallet, Transaction* transaction);
 
 int getCurrentBalanceOfWallet(WalletList* walletList, char* walletId);
+
+// End
 
 #endif

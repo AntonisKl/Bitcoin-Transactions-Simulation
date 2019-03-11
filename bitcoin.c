@@ -1,7 +1,18 @@
 #include "bitcoin_tree_list/bitcoin_tree_list.h"
 #include "hashtable/hashtable.h"
 
+static HashTable *senderHashTable, *receiverHashTable;
+static BitcoinList* bitcoinList;
+static WalletList* walletList;
+
+void intHandler(int dummy) {
+    freeMemory(&senderHashTable, &receiverHashTable, &bitcoinList, &walletList);
+    exit(0);
+}
+
 int main(int argc, char** argv) {
+    signal(SIGINT, intHandler);
+
     srand(time(NULL));
 
     char *bitcoinBalancesFileName, *transactionsFileName;
@@ -11,10 +22,6 @@ int main(int argc, char** argv) {
     handleArgs(argc, argv, &bitcoinBalancesFileName, &transactionsFileName, &bitcoinValue, &senderHashTableSize, &receiverHashTableSize, &bucketSizeBytes);
 
     int bucketSize = bucketSizeBytes / sizeof(Transaction*);
-
-    HashTable *senderHashTable, *receiverHashTable;
-    BitcoinList* bitcoinList;
-    WalletList* walletList;
 
     senderHashTable = initHashTable(senderHashTableSize, bucketSize);
     receiverHashTable = initHashTable(receiverHashTableSize, bucketSize);
@@ -28,8 +35,9 @@ int main(int argc, char** argv) {
     // }
 
     handleTransactionsFile(transactionsFileName, senderHashTable, receiverHashTable, bitcoinList, walletList, &lastTransactionTimestamp);
-    printf("LAST TIMESTAMP: %ld\n", lastTransactionTimestamp);
-    printTransactionsInHashTable(senderHashTable);
+    // printf("LAST TIMESTAMP: %ld\n", lastTransactionTimestamp);
+
+    // printTransactionsInHashTable(senderHashTable);
 
     handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList, &lastTransactionTimestamp);
 

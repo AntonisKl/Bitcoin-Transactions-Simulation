@@ -1,12 +1,7 @@
 #include "wallet_list.h"
 
-WalletList* initWalletList() {
-    WalletList* walletList = (WalletList*)malloc(sizeof(WalletList));
-    walletList->size = 0;
-    walletList->firstWallet = NULL;
 
-    return walletList;
-}
+//////////////////////////////////////////////////////////////////////////////// START OF WALLET ///////////////////////////////////////////////////////////////
 
 Wallet* initWallet(char* walletId, unsigned int balance, BitcoinList* bitcoinList) {
     Wallet* wallet = (Wallet*)malloc(sizeof(Wallet));
@@ -27,55 +22,13 @@ void freeWallet(Wallet** wallet) {
     free((*wallet)->walletId);
     (*wallet)->walletId = NULL;
 
-    freeBitcoinList(&(*wallet)->bitcoinList, 0);  ////////////////////////////////// THIS CAUSES FREE ERROR
+    freeBitcoinList(&(*wallet)->bitcoinList, 0, 0);  ////////////////////////////////// THIS CAUSES FREE ERROR
 
     (*wallet)->nextWallet = NULL;
 
     free(*wallet);
     (*wallet) = NULL;
 }
-
-// Wallet* initWallet(char* name) {
-//     Wallet* wallet = (Wallet*)malloc(sizeof(Wallet));
-//     wallet->name = (char*)malloc(PATH_MAX);
-//     strcpy(wallet->name, name);
-//     wallet->nextNode = NULL;
-//     wallet->prevNode = NULL;
-
-//     return wallet;
-// }
-
-// void freeWallet(Wallet** wallet) {
-//     if ((*wallet) == NULL)
-//         return;
-
-//     free((*wallet)->name);
-//     (*wallet)->name = NULL;
-//     free(*wallet);
-//     (*wallet) = NULL;
-//     return;
-// }
-
-// void freeWalletList(WalletList** walletList) {
-//     Wallet* curWallet = (*walletList)->firstWallet;
-
-//     while (curWallet != NULL) {
-//         free(curWallet->name);
-//         curWallet->name = NULL;
-
-//         if (curWallet->nextNode != NULL) {
-//             curWallet = curWallet->nextNode;
-//             free(curWallet->prevNode);
-
-//             curWallet->prevNode = NULL;
-//         } else {
-//             free(curWallet);
-//             curWallet = NULL;
-//         }
-//     }
-//     free(*walletList);
-//     (*walletList) = NULL;
-// }
 
 void freeWalletRec(Wallet** wallet) {
     if ((*wallet) == NULL)
@@ -87,6 +40,18 @@ void freeWalletRec(Wallet** wallet) {
     freeWallet(&(*wallet));
 
     return;
+}
+
+//////////////////////////////////////////////////////////////////////////////// END OF WALLET ///////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////// START OF WALLET LIST ///////////////////////////////////////////////////////////////
+
+WalletList* initWalletList() {
+    WalletList* walletList = (WalletList*)malloc(sizeof(WalletList));
+    walletList->size = 0;
+    walletList->firstWallet = NULL;
+
+    return walletList;
 }
 
 void freeWalletList(WalletList** walletList) {
@@ -125,7 +90,7 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
         walletList->firstWallet = initWallet(walletId, balance, bitcoinList);
 
         walletList->size++;
-        printf("Inserted |%s| to WalletList\n\n", walletId);
+        printf(ANSI_COLOR_MAGENTA "Inserted wallet with id %s to WalletList\n" ANSI_COLOR_RESET, walletId);
         return walletList->firstWallet;
     } else {
         Wallet* curWallet = walletList->firstWallet;
@@ -138,7 +103,7 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
             // curWallet->prevNode = walletToInsert;
             walletList->firstWallet = walletToInsert;
             walletList->size++;
-            printf("Inserted |%s| to WalletList\n\n", walletId);
+            printf(ANSI_COLOR_MAGENTA "Inserted wallet with id %s to WalletList\n" ANSI_COLOR_RESET, walletId);
             return walletList->firstWallet;
         }
         while (curWallet != NULL) {
@@ -151,7 +116,7 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
                     // curWallet->nextNode->prevNode = walletToInsert;
                     curWallet->nextWallet = walletToInsert;
                     walletList->size++;
-                    printf("Inserted |%s| to WalletList\n\n", walletId);
+                    printf(ANSI_COLOR_MAGENTA "Inserted wallet with id %s to WalletList\n" ANSI_COLOR_RESET, walletId);
                     return curWallet->nextWallet;
                 }
             } else {
@@ -160,7 +125,7 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
                 // curWallet->nextNode->prevNode = curWallet;
 
                 walletList->size++;
-                printf("Inserted |%s| to WalletList\n\n", walletId);
+                printf(ANSI_COLOR_MAGENTA "Inserted wallet with id %s to WalletList\n" ANSI_COLOR_RESET, walletId);
                 return curWallet->nextWallet;
             }
 
@@ -171,48 +136,45 @@ Wallet* addWalletToWalletList(WalletList* walletList, char* walletId, unsigned i
     return NULL;  // not normal behavior
 }
 
-unsigned int getFirstBitcoinBalanceOfUser(WalletList* walletList, char* walletId) {
-    Wallet* foundWallet = findWalletInWalletList(walletList, walletId);
-    if (foundWallet == NULL) {
-        printf("Wallet not found\n");
-        return -1;
-    }
+//////////////////////////////////////////////////////////////////////////////// END OF WALLET LIST ///////////////////////////////////////////////////////////////
 
-    return getUnspentAmountOfBitcoinByTree(foundWallet->bitcoinList->firstNode->bitcoinTree);
-}
+//////////////////////////////////////////////////////////////////////////////// START OF HIGH LEVEL FUNCTIONS ///////////////////////////////////////////////////////////////
 
 int handleWalletToWalletTransfer(Wallet* senderWallet, Wallet* receiverWallet, Transaction* transaction) {
     int amountToSpend = transaction->amount;
     if (senderWallet->balance < amountToSpend) {
-        printf("Insufficient balance, transaction amount: %d\n", transaction->amount);
+        printError("Insufficient balance\n");
         return -1;
     }
-    printf("handleWalletToWalletTransfer1\n");
-    printf("amountToSpend before: %d\n", amountToSpend);
+    //printf("handleWalletToWalletTransfer1\n");
+    //printf("amountToSpend before: %d\n", amountToSpend);
     // addLogToBitcoinTree(senderWallet->bitcoinList->firstNode->bitcoinTree, transaction, &amountToSpend);
     // addBitcoinListNodeToBitcoinListByPointer(receiverWallet->bitcoinList,,
     //                                 prevAmountToSpend - amountToSpend);
     while (amountToSpend > 0) {
+        int prevAmountToSpend = amountToSpend;
         addLogToBitcoinTree(senderWallet->bitcoinList->firstNode->bitcoinTree, transaction, &amountToSpend);
-        printf("11\n");
-        addBitcoinListNodeToBitcoinListByPointer(receiverWallet->bitcoinList, senderWallet->bitcoinList->firstNode);
-        printf("22\n");
+        printf(ANSI_COLOR_GREEN "Transferred %d dollars of bitcoin %d from %s to %s\n" ANSI_COLOR_RESET, prevAmountToSpend - amountToSpend,
+               senderWallet->bitcoinList->firstNode->bitcoinTree->bitcoinId, senderWallet->walletId, receiverWallet->walletId);
+        //printf("11\n");
+        addBitcoinListNodeToBitcoinListByPointer(receiverWallet->bitcoinList, senderWallet->bitcoinList->firstNode, receiverWallet->walletId);
+        //printf("22\n");
         if (amountToSpend > 0) {
             deleteBitcoinListNodeFromBitcoinList(senderWallet->bitcoinList, senderWallet->bitcoinList->firstNode->bitcoinTree->bitcoinId);
         }
-        printf("33 amountToSpend: %d\n", amountToSpend);
+        //printf("33 amountToSpend: %d\n", amountToSpend);
     }
-    printf("handleWalletToWalletTransfer2\n");
+    //printf("handleWalletToWalletTransfer2\n");
 
     if (getCurrentBitcoinBalanceOfWalletId(senderWallet->bitcoinList->firstNode->bitcoinTree, senderWallet->walletId) <= 0) {
-        printf("handleWalletToWalletTransfer3\n");
+        //printf("handleWalletToWalletTransfer3\n");
         deleteBitcoinListNodeFromBitcoinList(senderWallet->bitcoinList, senderWallet->bitcoinList->firstNode->bitcoinTree->bitcoinId);
     }
 
-    printf("transaction amount: %d\n", transaction->amount);
+    //printf("transaction amount: %d\n", transaction->amount);
     senderWallet->balance -= transaction->amount;
     receiverWallet->balance += transaction->amount;
-    printf("balances: %d, %d\n", senderWallet->balance, receiverWallet->balance);
+    //printf("balances: %d, %d\n", senderWallet->balance, receiverWallet->balance);
 
     return 0;
 }
@@ -227,28 +189,4 @@ int getCurrentBalanceOfWallet(WalletList* walletList, char* walletId) {
     return foundWallet->balance;
 }
 
-// int deleteWalletFromWalletList(WalletList* walletList, char* name) {
-//     if (walletList == NULL)
-//         return -1;
-//     Wallet* walletToDelete = findWalletInWalletList(walletList, name);
-
-//     if (walletToDelete == NULL) {
-//         printf("Name node with name %s not found in names' list\n", name);
-//         return -1;
-//     }
-
-//     if (strcmp(walletToDelete->name, walletList->firstWallet->name) == 0) {
-//         walletList->firstWallet = walletToDelete->nextNode;
-//     }
-//     if (walletToDelete->prevNode != NULL) {
-//         walletToDelete->prevNode->nextNode = walletToDelete->nextNode;
-//     }
-//     if (walletToDelete->nextNode != NULL) {
-//         walletToDelete->nextNode->prevNode = walletToDelete->prevNode;
-//     }
-
-//     freeWallet(&walletToDelete);
-//     walletList->size--;
-
-//     return 0;
-// }
+//////////////////////////////////////////////////////////////////////////////// END OF HIGH LEVEL FUNCTIONS ///////////////////////////////////////////////////////////////

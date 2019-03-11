@@ -2,9 +2,9 @@
 
 //////////////////////////////////////////////////////////////////////////////// START OF TRANSACTION ///////////////////////////////////////////////////////////////
 
-Transaction* initTransaction(char* transactionId, int amount, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList) {  // bitcoinList will be already initialized
+Transaction* initTransaction(char* transactionId, int amount, char* senderWalletId, char* receiverWalletId, char* datetimeS) {  // bitcoinList will be already initialized
     Transaction* transaction = (Transaction*)malloc(sizeof(Transaction));
-    printf("\n\n\nINIT TRANSACTION WITH ID: %s\n\n\n\n", transactionId);
+    //printf("\n\nINIT TRANSACTION WITH ID: %s\n\n", transactionId);
     transaction->amount = amount;
 
     transaction->transactionId = (char*)malloc(MAX_TRANSACTION_ID_SIZE);
@@ -22,7 +22,7 @@ Transaction* initTransaction(char* transactionId, int amount, char* senderWallet
     transaction->timestamp = datetimeStringToTimeStamp(datetimeS);
 
     // transaction->bitcoinList = initBitcoinList();
-    transaction->bitcoinList = bitcoinList;
+    // transaction->bitcoinList = bitcoinList;
 
     transaction->nextTransaction = NULL;
 
@@ -33,7 +33,7 @@ void freeTransaction(Transaction** transaction) {
     if ((*transaction) == NULL)
         return;
 
-    printf("\n\n\nFREE TRANSACTION WITH ID: %s\n\n\n\n", (*transaction)->transactionId);
+    // printf("Freed TRANSACTION WITH ID: %s\n\n", (*transaction)->transactionId);
 
     free((*transaction)->transactionId);
     (*transaction)->transactionId = NULL;
@@ -43,13 +43,13 @@ void freeTransaction(Transaction** transaction) {
     (*transaction)->receiverWalletId = NULL;
     free((*transaction)->datetimeS);
     (*transaction)->datetimeS = NULL;
-    freeBitcoinList(&(*transaction)->bitcoinList, 0);
-    (*transaction)->bitcoinList = NULL;
+    // freeBitcoinList(&(*transaction)->bitcoinList, 0, 0);
+    // (*transaction)->bitcoinList = NULL;
 
     free((*transaction));
     (*transaction) = NULL;
 
-    printf("freed Transaction!!\n");
+    // printf("freed Transaction!!\n");
     return;
 }
 
@@ -65,27 +65,9 @@ void freeTransactionRec(Transaction** transaction) {
     return;
 }
 
-// Transaction** initTransactionArray(unsigned int size) {
-//     Transaction** transactions = (Transaction**)malloc(size * sizeof(Transaction*));
-//     for (int i = 0; i < size; i++) {
-//         transactions[i] = NULL;
-//     }
-
-//     return transactions;
-// }
-
-// void freeTransactionArray(Transaction*** transactions, unsigned int size) {
-//     for (int i = 0; i < size; i++) {
-//         if ((*transactions[i]) != NULL)
-//             freeTransaction(transactions[i]);
-//     }
-
-//     free((*transactions));
-//     (*transactions) = NULL;
-//     return;
-// }
-
 //////////////////////////////////////////////////////////////////////////////// END OF TRANSACTION ///////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////// START OF TRANSACTION LIST ///////////////////////////////////////////////////////////////
 
 TransactionList* initTransactionList(char* walletId) {
     TransactionList* transactionList = (TransactionList*)malloc(sizeof(TransactionList));
@@ -121,21 +103,6 @@ void freeTransactionList(TransactionList** transactionList, char shoudFreeTransa
     if (shoudFreeTransactions == 1) {
         freeTransactionRec(&(*transactionList)->firstTransaction);
     }
-    // while (curBucket != NULL) {
-    //     // free(curBucket->name);
-    //     // curBucket->name = NULL;
-
-    //     if (curBucket->nextBucket != NULL) {
-    //         curBucket = curBucket->nextBucket;
-    //         freeBucket()
-    //         // free(curBucket->prevNode);
-
-    //         // curBucket->prevNode = NULL;
-    //     } else {
-    //         free(curBucket);
-    //         curBucket = NULL;
-    //     }
-    // }
 
     free((*transactionList)->walletId);
     (*transactionList)->walletId = NULL;
@@ -145,38 +112,6 @@ void freeTransactionList(TransactionList** transactionList, char shoudFreeTransa
 
     return;
 }
-
-// void freeTransactionListNoTransactions(TransactionList** transactionList) {
-//     if ((*transactionList) == NULL)
-//         return;
-//     // Bucket* curBucket = (*transactionList)->firstTransaction;
-
-//     // freeTransactionRec(&(*transactionList)->firstTransaction);
-
-//     // while (curBucket != NULL) {
-//     //     // free(curBucket->name);
-//     //     // curBucket->name = NULL;
-
-//     //     if (curBucket->nextBucket != NULL) {
-//     //         curBucket = curBucket->nextBucket;
-//     //         freeBucket()
-//     //         // free(curBucket->prevNode);
-
-//     //         // curBucket->prevNode = NULL;
-//     //     } else {
-//     //         free(curBucket);
-//     //         curBucket = NULL;
-//     //     }
-//     // }
-
-//     free((*transactionList)->walletId);
-//     (*transactionList)->walletId = NULL;
-
-//     free(*transactionList);
-//     (*transactionList) = NULL;
-
-//     return;
-// }
 
 void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size, char shoudFreeTransactions) {
     if ((*transactionLists) == NULL)
@@ -194,35 +129,18 @@ void freeTransactionListArray(TransactionList*** transactionLists, unsigned int 
     return;
 }
 
-// Bucket* findBucketInTransactionList(TransactionList* transactionList, char* name) {
-//     if (transactionList == NULL)
-//         return NULL;
-
-//     Bucket* curBucket = transactionList->firstTransaction;
-
-//     while (curBucket != NULL) {
-//         if (strcmp(curBucket->name, name) == 0) {
-//             return curBucket;
-//         } else if (strcmp(name, curBucket->name) < 0) {  // no need for searching further since the list is sorted
-//             return NULL;
-//         }
-//         curBucket = curBucket->nextBucket;
-//     }
-//     return NULL;
-// }
-
 Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction) {  // add by pointer
     if (transactionList->size == 0) {
         transactionList->firstTransaction = transaction;
         transactionList->lastTransaction = transactionList->firstTransaction;
         transactionList->size++;
-        printf("added transaction with id: %s\n", transaction->transactionId);
+        //printf("added transaction with id: %s\n", transaction->transactionId);
         return transactionList->firstTransaction;
     } else {
         transactionList->lastTransaction->nextTransaction = transaction;
         transactionList->lastTransaction = transactionList->lastTransaction->nextTransaction;
         transactionList->size++;
-        printf("added transaction with id: %s\n", transaction->transactionId);
+        //printf("added transaction with id: %s\n", transaction->transactionId);
         return transactionList->lastTransaction;
     }
 
@@ -235,7 +153,7 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
         transactionList->lastTransaction = transactionList->firstTransaction;
 
         transactionList->size++;
-        printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+        printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
         return transactionList->firstTransaction;
     } else {
         Transaction* curTransaction = transactionList->firstTransaction;
@@ -248,7 +166,7 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
             // curTransaction->prevTransaction = transactionToInsert;
             transactionList->firstTransaction = transactionToInsert;
             transactionList->size++;
-            printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+            printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
             return transactionList->firstTransaction;
         }
         while (curTransaction != NULL) {
@@ -261,8 +179,11 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
                     // curTransaction->nextTransaction->prevTransaction = transactionToInsert;
                     curTransaction->nextTransaction = transactionToInsert;
                     transactionList->size++;
-                    printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+                    printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
                     return curTransaction->nextTransaction;
+                } else if (transaction->timestamp == curTransaction->nextTransaction->timestamp && strcmp(transaction->transactionId, curTransaction->nextTransaction->transactionId) == 0) {
+                    freeTransaction(&transaction);
+                    return NULL;  // we don't want duplicates
                 }
             } else {
                 // insert at the end
@@ -271,7 +192,7 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
                 transactionList->lastTransaction = curTransaction->nextTransaction;
 
                 transactionList->size++;
-                printf("Inserted |%ld| to TransactionList\n\n", transaction->timestamp);
+                printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
                 return curTransaction->nextTransaction;
             }
 
@@ -281,6 +202,57 @@ Transaction* addTransactionToTransactionListSorted(TransactionList* transactionL
 
     return NULL;  // not normal behavior
 }
+
+void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings) {
+    TransactionList* tempTransactionList = initTransactionList(NULL);
+    int amountSum = 0;
+
+    Transaction* curTransaction = transactionList->firstTransaction;
+    while (curTransaction != NULL) {
+        char *timeS, *dateS, datetimeSCopy[MAX_DATETIME_SIZE];
+        strcpy(datetimeSCopy, curTransaction->datetimeS);
+        dateS = strtok(datetimeSCopy, " ");
+        timeS = strtok(NULL, " ");
+        if ((time1 == NULL && date1 == NULL && time2 == NULL && date2 == NULL) ||
+            ((time1 != NULL && date1 != NULL && time2 != NULL && date2 != NULL) && compareDatesS(dateS, date1) >= 0 && compareDatesS(dateS, date2) <= 0 && compareTimesS(timeS, time1) >= 0 && compareTimesS(timeS, time2) <= 0) ||
+            ((time1 != NULL && date1 == NULL && time2 != NULL && date2 == NULL) && compareTimesS(timeS, time1) >= 0 && compareTimesS(timeS, time2) <= 0) ||
+            ((time1 == NULL && date1 != NULL && time2 == NULL && date2 != NULL) && compareDatesS(dateS, date1) >= 0 && compareDatesS(dateS, date2) <= 0)) {
+            addTransactionToTransactionListSorted(tempTransactionList, initTransaction(curTransaction->transactionId, curTransaction->amount, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->datetimeS));
+            amountSum += curTransaction->amount;
+        }
+        curTransaction = curTransaction->nextTransaction;
+    }
+
+    if (tempTransactionList->size == 0) {
+        printf("No transactions found\n");
+        freeTransactionList(&tempTransactionList, 1);
+        return;
+    }
+
+    printf(ANSI_COLOR_YELLOW "\nResults:" ANSI_COLOR_RESET "\nAmount of dollars %s: %d\n", findEarnings == 1 ? "earned" : "paid", amountSum);
+    curTransaction = tempTransactionList->firstTransaction;
+    while (curTransaction != NULL) {
+        printf("%s %s %s %d %s\n", curTransaction->transactionId, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->amount, curTransaction->datetimeS);
+        curTransaction = curTransaction->nextTransaction;
+    }
+    freeTransactionList(&tempTransactionList, 1);
+
+    return;
+    // freeTransactionList(tempTransactionList);
+}
+
+void printTransactionsOfTransactionListSimple(TransactionList* transactionList) {
+    Transaction* curTransaction = transactionList->firstTransaction;
+    printf(ANSI_COLOR_YELLOW "\nResults:\n" ANSI_COLOR_RESET);
+    while (curTransaction != NULL) {
+        printf("%s %s %s %d %s\n", curTransaction->transactionId, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->amount, curTransaction->datetimeS);
+        curTransaction = curTransaction->nextTransaction;
+    }
+
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////////////// END OF TRANSACTION LIST ///////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////// START OF BUCKET ///////////////////////////////////////////////////////////////
 
@@ -314,31 +286,9 @@ void freeBucketRec(HashTable* hashTable, Bucket** bucket, char shoudFreeTransact
 
     freeBucketRec(hashTable, &((*bucket)->nextBucket), shoudFreeTransactions);
 
-    // freeTransactionArray(&(*bucket)->transactions, hashTable->bucketSize);
-
-    // free((*bucket)->name);
-    // (*bucket)->name = NULL;
-
     freeBucket(bucket, hashTable->bucketSize, shoudFreeTransactions);
-    // free(*bucket);
-    // (*bucket) = NULL;
     return;
 }
-
-// Transaction* addTransactionToHashTable(HashTable* hashTable, unsigned int listIndex, Transaction* transaction) {
-//     TransactionList* foundTransactionList = findTransactionListInBucketList(hashTable, /*walletid*/, listIndex);
-
-//     if (foundTransactionList == NULL) {
-//         Bucket* lastBucket = hashTable->bucketLists[listIndex]->lastBucket;
-//         lastBucket->transactionLists[lastBucket->nextIndex] = initTransactionList(walletId);
-//         foundTransactionList = lastBucket->transactionLists[lastBucket->nextIndex];
-
-//         lastBucket->nextIndex++;
-//     }
-
-//     addTransactionToEndOfTransactionList(foundTransactionList, transaction);
-
-// }
 
 //////////////////////////////////////////////////////////////////////////////// END OF BUCKET ///////////////////////////////////////////////////////////////
 
@@ -355,8 +305,6 @@ BucketList** initBucketListArray(unsigned int size) {
 
 BucketList* initBucketList() {
     BucketList* bucketList = (BucketList*)malloc(sizeof(BucketList));
-    // bucketList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
-    // strcpy(bucketList->walletId, walletId);
 
     bucketList->size = 0;
 
@@ -369,28 +317,8 @@ BucketList* initBucketList() {
 void freeBucketList(HashTable* hashTable, BucketList** bucketList, char shoudFreeTransactions) {
     if ((*bucketList) == NULL)
         return;
-    // Bucket* curBucket = (*bucketList)->firstBucket;
 
     freeBucketRec(hashTable, &(*bucketList)->firstBucket, shoudFreeTransactions);
-
-    // while (curBucket != NULL) {
-    //     // free(curBucket->name);
-    //     // curBucket->name = NULL;
-
-    //     if (curBucket->nextBucket != NULL) {
-    //         curBucket = curBucket->nextBucket;
-    //         freeBucket()
-    //         // free(curBucket->prevNode);
-
-    //         // curBucket->prevNode = NULL;
-    //     } else {
-    //         free(curBucket);
-    //         curBucket = NULL;
-    //     }
-    // }
-
-    // free((*bucketList)->walletId);
-    // (*bucketList)->walletId = NULL;
 
     free(*bucketList);
     (*bucketList) = NULL;
@@ -436,71 +364,7 @@ TransactionList* findTransactionListInBucketList(HashTable* hashTable, char* wal
     return NULL;
 }
 
-// Bucket* findBucketInBucketList(BucketList* bucketList, char* name) {
-//     if (bucketList == NULL)
-//         return NULL;
-
-//     Bucket* curBucket = bucketList->firstBucket;
-
-//     while (curBucket != NULL) {
-//         if (strcmp(curBucket->name, name) == 0) {
-//             return curBucket;
-//         } else if (strcmp(name, curBucket->name) < 0) {  // no need for searching further since the list is sorted
-//             return NULL;
-//         }
-//         curBucket = curBucket->nextBucket;
-//     }
-//     return NULL;
-// }
-
 Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSize) {
-    // if (bucketList->size == 0) {
-    //     bucketList->firstBucket = initBucket(name);
-
-    //     bucketList->size++;
-    //     printf("Inserted |%s| to BucketList\n\n", name);
-    //     return bucketList->firstBucket;
-    // } else {
-    //     Bucket* curBucket = bucketList->firstBucket;
-
-    //     if (strcmp(name, curBucket->name) < 0) {
-    //         // insert at start
-    //         Bucket* bucketToInsert = initBucket(name);
-    //         bucketToInsert->nextBucket = curBucket;
-
-    //         curBucket->prevNode = bucketToInsert;
-    //         bucketList->firstBucket = bucketToInsert;
-    //         bucketList->size++;
-    //         printf("Inserted |%s| to BucketList\n\n", name);
-    //         return bucketList->firstBucket;
-    //     }
-    //     while (curBucket != NULL) {
-    //         if (curBucket->nextBucket != NULL) {
-    //             if (strcmp(name, curBucket->nextBucket->name) < 0) {
-    //                 Bucket* bucketToInsert = initBucket(name);
-    //                 bucketToInsert->prevNode = curBucket;
-    //                 bucketToInsert->nextBucket = curBucket->nextBucket;
-
-    //                 curBucket->nextBucket->prevNode = bucketToInsert;
-    //                 curBucket->nextBucket = bucketToInsert;
-    //                 bucketList->size++;
-    //                 printf("Inserted |%s| to BucketList\n\n", name);
-    //                 return curBucket->nextBucket;
-    //             }
-    //         } else {
-    //             // insert at the end
-    //             curBucket->nextBucket = initBucket(name);
-    //             curBucket->nextBucket->prevNode = curBucket;
-
-    //             bucketList->size++;
-    //             printf("Inserted |%s| to BucketList\n\n", name);
-    //             return curBucket->nextBucket;
-    //         }
-
-    //         curBucket = curBucket->nextBucket;
-    //     }
-    // }
-
     if (bucketList->size == 0) {
         bucketList->firstBucket = initBucket(bucketSize);
         bucketList->lastBucket = bucketList->firstBucket;
@@ -516,32 +380,6 @@ Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSi
 
     return NULL;  // not normal behavior
 }
-
-// int deleteBucketFromBucketList(BucketList* bucketList, char* name) {
-//     if (bucketList == NULL)
-//         return -1;
-//     Bucket* bucketToDelete = findBucketInBucketList(bucketList, name);
-
-//     if (bucketToDelete == NULL) {
-//         printf("Name node with name %s not found in names' list\n", name);
-//         return -1;
-//     }
-
-//     if (strcmp(bucketToDelete->name, bucketList->firstBucket->name) == 0) {
-//         bucketList->firstBucket = bucketToDelete->nextBucket;
-//     }
-//     if (bucketToDelete->prevNode != NULL) {
-//         bucketToDelete->prevNode->nextBucket = bucketToDelete->nextBucket;
-//     }
-//     if (bucketToDelete->nextBucket != NULL) {
-//         bucketToDelete->nextBucket->prevNode = bucketToDelete->prevNode;
-//     }
-
-//     freeBucket(&bucketToDelete);
-//     bucketList->size--;
-
-//     return 0;
-// }
 
 //////////////////////////////////////////////////////////////////////////////// END OF BUCKET LIST ///////////////////////////////////////////////////////////////
 
@@ -566,8 +404,8 @@ void freeHashTable(HashTable** hashTable, char shoudFreeTransactions) {
     (*hashTable) = NULL;
 }
 
+// djb2 hash function
 unsigned int hashFunction(HashTable* hashTable, char* walletId) {
-    // djb2 hash function
     unsigned long hash = 5381;
     int c;
 
@@ -582,15 +420,11 @@ char* getWalletIdByHashTableType(Transaction* transaction, HashTableType type) {
 }
 
 Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction, HashTableType hashTableType) {
-    // FIRST SEE IF TRANSACTION IS ALREADY MADE !!!!!!!!!!!!!!!!!!!!!!!!
-
     unsigned int index = hashFunction(hashTable, getWalletIdByHashTableType(transaction, hashTableType));  // implies that the sender is the right value to hash for this hash table
-    printf("index: %d WALLET ID: %s\n", index, getWalletIdByHashTableType(transaction, hashTableType));
 
     TransactionList* foundTransactionList = NULL;
     if (hashTable->bucketLists[index] == NULL) {
         hashTable->bucketLists[index] = initBucketList(transaction->senderWalletId);
-        printf("init bucket list at index: %d\n\n\n\n", index);
         addBucketToEndOfBucketList(hashTable->bucketLists[index], hashTable->bucketSize);
     } else {
         foundTransactionList = findTransactionListInBucketList(hashTable, getWalletIdByHashTableType(transaction, hashTableType), index);
@@ -598,9 +432,6 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
 
     if (foundTransactionList == NULL) {
         Bucket* lastBucket = hashTable->bucketLists[index]->lastBucket;
-        // if (lastBucket == NULL) {
-        //     hashTable->bucketLists[index]->lastBucket = initBucket(hashTable->bucketSize);
-        // }
 
         if (lastBucket->nextIndex >= hashTable->bucketSize) {  // bucket is full
             lastBucket = addBucketToEndOfBucketList(hashTable->bucketLists[index], hashTable->bucketSize);
@@ -612,49 +443,50 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
         lastBucket->nextIndex++;
     }
 
-    return addTransactionToEndOfTransactionList(foundTransactionList, transaction);
+    Transaction* insertedTransaction = addTransactionToEndOfTransactionList(foundTransactionList, transaction);
+    printf(ANSI_COLOR_CYAN "Inserted transaction with id %s to %s HashTable\n" ANSI_COLOR_RESET, transaction->transactionId, hashTableType == RECEIVER ? "receiver" : "sender");
 
-    // return addTransactionToBucketList(hashTable, index, transaction);
+    return insertedTransaction;
 }
 
 Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId) {
     for (int i = 0; i < hashTable->bucketListArraySize; i++) {
-        printf("i=%d\n", i);
+        //printf("i=%d\n", i);
         BucketList* curBucketList = hashTable->bucketLists[i];
-        if (curBucketList == NULL) {
-            printf("continue\n");
+        if (curBucketList == NULL)
+            //printf("continue\n");
             continue;
-        }
+
         Bucket* curBucket = curBucketList->firstBucket;
         while (curBucket != NULL) {
             for (int j = 0; j < curBucket->nextIndex; j++) {
-                printf("j=%d, index=%d\n", j, curBucket->nextIndex);
+                //printf("j=%d, index=%d\n", j, curBucket->nextIndex);
 
                 TransactionList* curTransactionList = curBucket->transactionLists[j];
 
                 Transaction* curTransaction = curTransactionList->firstTransaction;
                 while (curTransaction != NULL) {
-                    printf("while, curid=%s\n", curTransaction->transactionId);
+                    //printf("while, curid=%s\n", curTransaction->transactionId);
                     if (strcmp(curTransaction->transactionId, transactionId) == 0) {
                         return curTransaction;
                     }
-                    printf("hey\n");
+                    //printf("hey\n");
                     curTransaction = curTransaction->nextTransaction;
-                    printf("hey1.5\n");
+                    //printf("hey1.5\n");
                 }
-                printf("hey1\n");
+                //printf("hey1\n");
             }
             curBucket = curBucket->nextBucket;
         }
     }
-    printf("eeee\n");
+    //printf("eeee\n");
 
     return NULL;
 }
 
 Transaction* printTransactionsInHashTable(HashTable* hashTable) {
     for (int i = 0; i < hashTable->bucketListArraySize; i++) {
-        printf("i=%d\n", i);
+        //printf("i=%d\n", i);
         BucketList* curBucketList = hashTable->bucketLists[i];
         if (curBucketList == NULL) {
             continue;
@@ -666,89 +498,22 @@ Transaction* printTransactionsInHashTable(HashTable* hashTable) {
 
                 Transaction* curTransaction = curTransactionList->firstTransaction;
                 while (curTransaction != NULL) {
-                    printf("transaction id: %s, bucket list array index: %d\n", curTransaction->transactionId, i);
                     curTransaction = curTransaction->nextTransaction;
                 }
-                printf("hey1\n");
+                //printf("hey1\n");
             }
             curBucket = curBucket->nextBucket;
         }
     }
-    printf("eeee\n");
+    //printf("eeee\n");
 
     return NULL;
 }
 
 TransactionList* findTransactionListInHashTable(HashTable* hashTable, char* walletId) {
     int index = hashFunction(hashTable, walletId);
-    printf("inside index: %d\n", index);
+    //printf("inside index: %d\n", index);
     return findTransactionListInBucketList(hashTable, walletId, index);
-}
-
-// int getAmountSumFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2) {
-//     int amountSum = 0;
-//     Transaction* curTransaction = transactionList->firstTransaction;
-//     while (curTransaction != NULL) {
-//         char *timeS, *dateS, datetimeSCopy[MAX_DATETIME_SIZE];
-//         strcpy(datetimeSCopy, curTransaction->datetimeS);
-//         dateS = strtok(datetimeSCopy, " ");
-//         timeS = strtok(NULL, " ");
-//         if ((time1 == NULL && date1 == NULL && time2 == NULL && date2 == NULL) ||
-//             ((time1 != NULL && date1 != NULL && time2 != NULL && date2 != NULL) && compareDatesS(dateS, date1) > 0 && compareDatesS(dateS, date2) < 0 && compareTimesS(timeS, time1) > 0 && compareTimesS(timeS, time2) < 0) ||
-//             ((time1 != NULL && date1 == NULL && time2 != NULL && date2 == NULL) && compareTimesS(timeS, time1) > 0 && compareTimesS(timeS, time2) < 0) ||
-//             ((time1 == NULL && date1 != NULL && time2 == NULL && date2 != NULL) && compareDatesS(dateS, date1) > 0 && compareDatesS(dateS, date2) < 0)) {
-//             amountSum += curTransaction->amount;
-//         }
-//         curTransaction = curTransaction->nextTransaction;
-//     }
-// }
-
-void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings) {
-    TransactionList* tempTransactionList = initTransactionList(NULL);
-    int amountSum = 0;
-
-    Transaction* curTransaction = transactionList->firstTransaction;
-    while (curTransaction != NULL) {
-        char *timeS, *dateS, datetimeSCopy[MAX_DATETIME_SIZE];
-        strcpy(datetimeSCopy, curTransaction->datetimeS);
-        dateS = strtok(datetimeSCopy, " ");
-        timeS = strtok(NULL, " ");
-        if ((time1 == NULL && date1 == NULL && time2 == NULL && date2 == NULL) ||
-            ((time1 != NULL && date1 != NULL && time2 != NULL && date2 != NULL) && compareDatesS(dateS, date1) >= 0 && compareDatesS(dateS, date2) <= 0 && compareTimesS(timeS, time1) >= 0 && compareTimesS(timeS, time2) <= 0) ||
-            ((time1 != NULL && date1 == NULL && time2 != NULL && date2 == NULL) && compareTimesS(timeS, time1) >= 0 && compareTimesS(timeS, time2) <= 0) ||
-            ((time1 == NULL && date1 != NULL && time2 == NULL && date2 != NULL) && compareDatesS(dateS, date1) >= 0 && compareDatesS(dateS, date2) <= 0)) {
-            addTransactionToTransactionListSorted(tempTransactionList, curTransaction);
-            amountSum += curTransaction->amount;
-        }
-        curTransaction = curTransaction->nextTransaction;
-    }
-
-    if (tempTransactionList->size == 0) {
-        printf("No transactions found\n");
-        freeTransactionList(&tempTransactionList, 0);
-        return;
-    }
-
-    printf("Total amount of dollars %s: %d\n", findEarnings == 1 ? "earned" : "paid", amountSum);
-    curTransaction = tempTransactionList->firstTransaction;
-    while (curTransaction != NULL) {
-        printf("%s %s %s %d %s\n", curTransaction->transactionId, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->amount, curTransaction->datetimeS);
-        curTransaction = curTransaction->nextTransaction;
-    }
-    freeTransactionList(&tempTransactionList, 0);
-
-    return;
-    // freeTransactionList(tempTransactionList);
-}
-
-void printTransactionsOfTransactionListSimple(TransactionList* transactionList) {
-    Transaction* curTransaction = transactionList->firstTransaction;
-    while (curTransaction != NULL) {
-        printf("%s %s %s %d %s\n", curTransaction->transactionId, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->amount, curTransaction->datetimeS);
-        curTransaction = curTransaction->nextTransaction;
-    }
-
-    return;
 }
 
 //////////////////////////////////////////////////////////////////////////////// END OF HASH TABLE ///////////////////////////////////////////////////////////////

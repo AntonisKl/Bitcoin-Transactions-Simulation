@@ -8,8 +8,7 @@ typedef struct BitcoinList BitcoinList; // forward declaration for compilation
 
 typedef struct Transaction {
     char *transactionId, *senderWalletId, *receiverWalletId, *datetimeS;
-    BitcoinList* bitcoinList; // bitcoins involved
-    time_t timestamp;  // millis or sec??
+    time_t timestamp;  // unix timestamp in seconds
     int amount;
     struct Transaction* nextTransaction;
 } Transaction;
@@ -22,8 +21,7 @@ typedef struct TransactionList {
 
 typedef struct Bucket {
     TransactionList** transactionLists;
-    // Transaction** transactions;                   // array of fixed size
-    struct Bucket* nextBucket /*, *prevBucket*/;  // no deletions so prevBucket is not needed
+    struct Bucket* nextBucket;  // no deletions so prevBucket is not needed
     unsigned int nextIndex;
 } Bucket;
 
@@ -42,8 +40,9 @@ typedef enum HashTableType {
     SENDER, RECEIVER
 } HashTableType;
 
-// Transaction
-Transaction* initTransaction(char* transactionId, int amount, char* senderWalletId, char* receiverWalletId, char* datetimeS, BitcoinList* bitcoinList);
+// Transaction and Transaction List
+
+Transaction* initTransaction(char* transactionId, int amount, char* senderWalletId, char* receiverWalletId, char* datetimeS);
 
 void freeTransaction(Transaction** transaction);
 
@@ -55,33 +54,18 @@ void freeTransactionList(TransactionList** transactionList, char shoudFreeTransa
 
 void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size, char shoudFreeTransactions);
 
-// Bucket* findBucketInTransactionList(TransactionList* transactionList, char* name) {
-//     if (transactionList == NULL)
-//         return NULL;
-
-//     Bucket* curBucket = transactionList->firstTransaction;
-
-//     while (curBucket != NULL) {
-//         if (strcmp(curBucket->name, name) == 0) {
-//             return curBucket;
-//         } else if (strcmp(name, curBucket->name) < 0) {  // no need for searching further since the list is sorted
-//             return NULL;
-//         }
-//         curBucket = curBucket->nextBucket;
-//     }
-//     return NULL;
-// }
-
 Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction);
 
 Transaction* addTransactionToTransactionListSorted(TransactionList* transactionList, Transaction* transaction);
 
-// Transaction** initTransactionArray(unsigned int size);
+void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings);
 
-// void freeTransactionArray(Transaction*** transactions, unsigned int size);
-// end
+void printTransactionsOfTransactionListSimple(TransactionList* transactionList);
 
-// Bucket
+// End
+
+// Bucket and Bucket List
+
 Bucket* initBucket(unsigned int bucketSize);
 
 void freeBucketRec(HashTable* hashTable, Bucket** bucket, char shoudFreeTransactions);
@@ -97,9 +81,11 @@ void freeBucketList(HashTable* hashTable, BucketList** bucketList, char shoudFre
 void freeBucketListArray(HashTable* hashTable, BucketList*** bucketLists, unsigned int size, char shoudFreeTransactions);
 
 Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSize);
-// end
+
+// End
 
 // Hash Table
+
 HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSize);
 
 void freeHashTable(HashTable** hashTable, char shoudFreeTransactions);
@@ -111,13 +97,11 @@ char* getWalletIdByHashTableType(Transaction* transaction, HashTableType type);
 Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction, HashTableType hashTableType);
 
 Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId);
+
 Transaction* printTransactionsInHashTable(HashTable* hashTable);
 
 TransactionList* findTransactionListInHashTable(HashTable* hashTable, char* walletId);
 
-void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings);
-
-void printTransactionsOfTransactionListSimple(TransactionList* transactionList);
-// end
+// End
 
 #endif

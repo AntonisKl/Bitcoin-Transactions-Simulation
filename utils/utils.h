@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #define _XOPEN_SOURCE
 #define __USE_XOPEN
@@ -13,6 +14,7 @@
 
 #include "../wallet_list/wallet_list.h"
 #include "../hashtable/hashtable.h"
+
 
 #define MAX_WALLET_ID_SIZE 50
 #define MAX_TRANSACTION_ID_SIZE 50
@@ -24,41 +26,19 @@
 #define MAX_TIME_SIZE 6
 #define MAX_DATE_SIZE 11
 
-// Bitcoin
-
-// typedef struct BitcoinTreeNode {
-//     char* walletId;
-//     int amount;
-//     struct BitcoinTreeNode *receiverNode, *remainingNode;  // remainingNode may be NULL if remaining amount is 0
-// } BitcoinTreeNode;
-
-// typedef struct BitcoinTree {
-//     BitcoinTreeNode* rootNode;
-//     int bitcoinId;
-//     unsigned int size;
-//     struct BitcoinTree* nextBitcoinTree;
-// } BitcoinTree;
-
-// typedef struct BitcoinList {
-//     BitcoinTree *firstBitcoinTree;
-//     unsigned int size;
-// } BitcoinList;
-
-////////////
-
-// typedef struct Wallet {
-//     char* walletId;
-//     BitcoinList* bitcoinList;
-//     struct Wallet* nextWallet;
-// } Wallet;
-
-// typedef struct WalletList {
-//     Wallet* firstWallet;
-//     unsigned int size;
-// } WalletList;
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
 
 typedef struct HashTable HashTable;
 typedef struct WalletList WalletList;
+
+void printError(char* s);
+char stringIsNumber(char* s);
 
 void removeSpaces(char* str);
 
@@ -82,7 +62,7 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
 
 void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinList** bitcoinList, int bitcoinValue);
 
-void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, int withTransactionId, time_t* lastTransactionTimestamp);
+void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, char withTransactionId, time_t* lastTransactionTimestamp);
 
 void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
                             time_t* lastTransactionTimestamp);
