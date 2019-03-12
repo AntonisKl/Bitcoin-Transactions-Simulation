@@ -90,7 +90,7 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
 
 // reads a file that contains bitcoin balances, initializes and fills walletList and bitcoinList with valid data
 // bitcoinList: the main list that contains all bitcoins
-void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinList** bitcoinList, int bitcoinValue);
+void handleBitcoinBalancesFile(char* fileName, WalletList* walletList, BitcoinList* bitcoinList, int bitcoinValue);
 
 // validates a transaction string, makes the transaction if possible and updates senderHashTable and receiverHashTable appropriately
 // transactionS: the string of a single transaction

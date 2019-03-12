@@ -364,9 +364,7 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
     return;
 }
 
-void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinList** bitcoinList, int bitcoinValue) {
-    (*walletList) = initWalletList();
-    (*bitcoinList) = initBitcoinList();
+void handleBitcoinBalancesFile(char* fileName, WalletList* walletList, BitcoinList* bitcoinList, int bitcoinValue) {
 
     char line[MAX_FILE_LINE_SIZE], walletId[MAX_WALLET_ID_SIZE], *token;  // token: pointer to traverse each line with strtok
                                                                           // walletId: the wallet id that is read
@@ -404,11 +402,11 @@ void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinL
 
             // first create and add a bitcoin list node to the main bitcoin list (addBitcoinListNodeToBitcoinList)
             // and then add the new bitcoin tree's pointer to a new bitcoin list node of the bitcoin list of the current wallet (addBitcoinListNodeToBitcoinListByPointer)
-            addBitcoinListNodeToBitcoinListByBitcoinTreePointer(curWalletBitcoinList, addBitcoinListNodeToBitcoinList((*bitcoinList), walletId, bitcoinId, bitcoinValue)->bitcoinTree, walletId);
+            addBitcoinListNodeToBitcoinListByBitcoinTreePointer(curWalletBitcoinList, addBitcoinListNodeToBitcoinList(bitcoinList, walletId, bitcoinId, bitcoinValue)->bitcoinTree, walletId);
         }
 
         // create and add wallet to walletList
-        addWalletToWalletList((*walletList), walletId, bitcoinValue * curWalletBitcoinList->size, curWalletBitcoinList);
+        addWalletToWalletList(walletList, walletId, bitcoinValue * curWalletBitcoinList->size, curWalletBitcoinList);
     }
 
     fclose(fileP);
