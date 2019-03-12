@@ -1,28 +1,28 @@
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
-#include "../utils/utils.h"
 #include "../bitcoin_tree_list/bitcoin_tree_list.h"
+#include "../utils/utils.h"
 
-typedef struct BitcoinList BitcoinList; // forward declaration for compilation
+typedef struct BitcoinList BitcoinList;  // forward declaration for compilation
 
 typedef struct Transaction {
-    char *transactionId, *senderWalletId, *receiverWalletId, *datetimeS;
-    time_t timestamp;  // unix timestamp in seconds
-    int amount;
+    char *transactionId, *senderWalletId, *receiverWalletId, *datetimeS;  // datetimeS: valid datetime string as it was read
+    time_t timestamp;                                                     // unix timestamp in seconds
+    int amount;                                                           // dollars
     struct Transaction* nextTransaction;
 } Transaction;
 
 typedef struct TransactionList {
     Transaction *firstTransaction, *lastTransaction;
     unsigned int size;
-    char* walletId;
+    char* walletId;  // walletId: walletId of wallet that is involved in the transaction list
 } TransactionList;
 
 typedef struct Bucket {
-    TransactionList** transactionLists;
-    struct Bucket* nextBucket;  // no deletions so prevBucket is not needed
-    unsigned int nextIndex;
+    TransactionList** transactionLists;  // transactionLists: array of transaction lists
+    struct Bucket* nextBucket;           // no deletions so prevBucket is not needed
+    unsigned int nextIndex;              // nextIndex: index of transactionLists array in which we will insert the next transaction list that will be created
 } Bucket;
 
 typedef struct BucketList {
@@ -31,13 +31,14 @@ typedef struct BucketList {
 } BucketList;
 
 typedef struct HashTable {
-    BucketList** bucketLists;  // array of fixed size according to number of walletIds
-    char* walletId;
-    unsigned int bucketListArraySize, bucketSize; // bucketSize: number of transaction lists that fit inside a bucket
+    BucketList** bucketLists;                      // array of bucket lists
+    unsigned int bucketListArraySize, bucketSize;  // bucketListArraySize: size of bucket lists array
+                                                   // bucketSize: number of transaction lists that fit inside a bucket
 } HashTable;
 
 typedef enum HashTableType {
-    SENDER, RECEIVER
+    SENDER,
+    RECEIVER
 } HashTableType;
 
 // Transaction and Transaction List
@@ -50,16 +51,26 @@ TransactionList* initTransactionList(char* walletId);
 
 TransactionList** initTransactionListArray(unsigned int size);
 
+// if shoudFreeTransactions == 1: frees transactions as well
+// if shoudFreeTransactions == 0: does not free transactions
 void freeTransactionList(TransactionList** transactionList, char shoudFreeTransactions);
 
+// if shoudFreeTransactions == 1: frees transactions as well
+// if shoudFreeTransactions == 0: does not free transactions
 void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size, char shoudFreeTransactions);
 
+// adds transaction by pointer to end of transactionList
 Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction);
 
+// adds transaction by pointer to transactionList by keeping the ascending sorting order of the transactions by timestamp
 Transaction* addTransactionToTransactionListSorted(TransactionList* transactionList, Transaction* transaction);
 
+// prints transactions of transactionList that have date > date1 && date < date2 && time > time1 && time < time2 (if some values are NULL they are ignored)
+// the printed transactions are in ascending sorting order by timestamp
+// also, it prints the sum of the amount of dollars that are involved in the transactions of the transactionList
 void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings);
 
+// prints transactions of transactionList in ascending sorting order by timestamp
 void printTransactionsOfTransactionListSimple(TransactionList* transactionList);
 
 // End
@@ -68,16 +79,21 @@ void printTransactionsOfTransactionListSimple(TransactionList* transactionList);
 
 Bucket* initBucket(unsigned int bucketSize);
 
+// free each bucket of a bucket list recursively
+// if shoudFreeTransactions == 1: frees transactions as well
+// if shoudFreeTransactions == 0: does not free transactions
 void freeBucketRec(HashTable* hashTable, Bucket** bucket, char shoudFreeTransactions);
-
-Transaction* addTransactionToBucketList(HashTable* hashTable, unsigned int listIndex, Transaction* transaction);
 
 BucketList** initBucketListArray(unsigned int size);
 
 BucketList* initBucketList();
 
+// if shoudFreeTransactions == 1: frees transactions as well
+// if shoudFreeTransactions == 0: does not free transactions
 void freeBucketList(HashTable* hashTable, BucketList** bucketList, char shoudFreeTransactions);
 
+// if shoudFreeTransactions == 1: frees transactions as well
+// if shoudFreeTransactions == 0: does not free transactions
 void freeBucketListArray(HashTable* hashTable, BucketList*** bucketLists, unsigned int size, char shoudFreeTransactions);
 
 Bucket* addBucketToEndOfBucketList(BucketList* bucketList, unsigned int bucketSize);
@@ -90,16 +106,23 @@ HashTable* initHashTable(unsigned int bucketListArraySize, unsigned int bucketSi
 
 void freeHashTable(HashTable** hashTable, char shoudFreeTransactions);
 
+// djb2 hash function that generates a number in [0, hash table's size - 1] according to walletId
 unsigned int hashFunction(HashTable* hashTable, char* walletId);
 
+// returns receiver's or sender's wallet id according to type
 char* getWalletIdByHashTableType(Transaction* transaction, HashTableType type);
 
+// inserts transaction to hash table according to the result of the hash function
+// if hashTableType == RECEIVER: receiver's wallet id is hashed
+// if hashTableType == SENDER: sender's wallet id is hashed
 Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* transaction, HashTableType hashTableType);
 
+// searchs serially for a transaction in hash table
+// returns NULL if no transaction was found
 Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId);
 
-Transaction* printTransactionsInHashTable(HashTable* hashTable);
-
+// searchs for a transaction list with wallet id walletId in hash table
+// returns NULL if no transaction list was found
 TransactionList* findTransactionListInHashTable(HashTable* hashTable, char* walletId);
 
 // End

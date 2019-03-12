@@ -6,6 +6,11 @@ void printError(char* s) {
     return;
 }
 
+void raiseIntAndExit(int num) {
+    raise(SIGINT);
+    exit(num);
+}
+
 // Returns true if s is a number else false
 char stringIsNumber(char* s) {
     if (s == NULL)
@@ -27,23 +32,28 @@ char stringIsNumber(char* s) {
     return 1;
 }
 
-// Function to remove all spaces from a given string
 void removeSpaces(char* str) {
-    // To keep track of non-space character count
     if (str == NULL)
         return;
 
     int count = 0;
     int stringSize = strlen(str);
 
-    // Traverse the given string. If current character
-    // is not space, then place it at index 'count++'
     for (int i = 0; i < stringSize; i++) {
         if (str[i] != ' ')
-            str[count++] = str[i];  // here count is
-                                    // incremented
+            str[count++] = str[i];
     }
     str[count] = '\0';
+    return;
+}
+
+void freeString(char** s) {
+    if ((*s) == NULL)
+        return;
+
+    free((*s));
+    (*s) = NULL;
+
     return;
 }
 
@@ -91,7 +101,7 @@ char validateTimeS(char* timeS) {
     return 0;
 }
 
-char compareTimesS(char* time1, char* time2) {  // considers time string valid
+char compareTimesS(char* time1, char* time2) {  // considers time strings valid
     int hour1, minute1, hour2, minute2;
     timeStringToHourMinute(time1, &hour1, &minute1);
     timeStringToHourMinute(time2, &hour2, &minute2);
@@ -113,10 +123,10 @@ char compareTimesS(char* time1, char* time2) {  // considers time string valid
     return 2;  // error
 }
 
-void dateStringToDayMonthYear(char* timeS, int* day, int* month, int* year) {  // considers time string valid
+void dateStringToDayMonthYear(char* dateS, int* day, int* month, int* year) {  // considers date string valid
     char tempDateS[MAX_DATE_SIZE], *token, *endptr;
 
-    strcpy(tempDateS, timeS);
+    strcpy(tempDateS, dateS);
 
     token = strtok(tempDateS, "-");
     (*day) = strtol(token, &endptr, 10);
@@ -170,11 +180,12 @@ char validateDateS(char* dateS) {
     return 0;
 }
 
-char compareDatesS(char* date1, char* date2) {  // considers time string valid
+char compareDatesS(char* date1, char* date2) {  // considers date strings valid
     int day1, month1, year1, day2, month2, year2;
     dateStringToDayMonthYear(date1, &day1, &month1, &year1);
     dateStringToDayMonthYear(date2, &day2, &month2, &year2);
 
+    // compare years, months and days in this order
     if (year1 > year2) {
         return 1;
     } else if (year1 == year2) {
@@ -204,14 +215,6 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     char tempDatetimeS[MAX_DATETIME_SIZE];
     strcpy(tempDatetimeS, datetimeS);
 
-    // printf("|%s|\n", tempDatetimeS);
-    // if (strptime(datetimeS, "%d-%m-%Y %H:%M", &timeStruct) != NULL) {
-    //     timestamp = mktime(&timeStruct);
-    // } else {
-    //     perror("Time convert error");
-    //     return -1;
-    // }
-
     char *token, *endptr;
     int day, month, year, hour, minute;
 
@@ -223,7 +226,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     day = strtol(token, &endptr, 10);
     if ((endptr == token) || ((day == LONG_MAX || day == LONG_MIN) && errno == ERANGE) || day <= 0) {
         printError("Invalid date\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
     timeStruct.tm_mday = day;
 
@@ -235,9 +238,9 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     month = strtol(token, &endptr, 10);
     if ((endptr == token) || ((month == LONG_MAX || month == LONG_MIN) && errno == ERANGE) || month <= 0) {
         printError("Invalid date\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
-    timeStruct.tm_mon = month - 1;  // 0 - January
+    timeStruct.tm_mon = month - 1;  // 0 is January
 
     token = strtok(NULL, " ");
     if (token == NULL) {
@@ -247,9 +250,9 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     year = strtol(token, &endptr, 10);
     if ((endptr == token) || ((year == LONG_MAX || year == LONG_MIN) && errno == ERANGE) || year <= 0) {
         printError("Invalid date\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
-    timeStruct.tm_year = year - 1900;
+    timeStruct.tm_year = year - 1900;  // - 1900: to comply with struct tm's standard
 
     token = strtok(NULL, ":");
     if (token == NULL) {
@@ -259,7 +262,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     hour = strtol(token, &endptr, 10);
     if ((endptr == token) || ((hour == LONG_MAX || hour == LONG_MIN) && errno == ERANGE) || hour < 0) {
         printError("Invalid date\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
     timeStruct.tm_hour = hour;
 
@@ -271,104 +274,91 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     minute = strtol(token, &endptr, 10);
     if ((endptr == token) || ((minute == LONG_MAX || minute == LONG_MIN) && errno == ERANGE) || minute < 0) {
         printError("Invalid date\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
     timeStruct.tm_min = minute;
 
     timeStruct.tm_sec = 0;
-    timeStruct.tm_isdst = -1;
+    timeStruct.tm_isdst = -1;  // -1: don't give information about Daylight Saving Time
 
-    // printf("day: %d, month: %d, year: %d, hour: %d, minute: %d\n", timeStruct.tm_mday, timeStruct.tm_mon, timeStruct.tm_year, timeStruct.tm_hour, timeStruct.tm_min);
-    timestamp = mktime(&timeStruct);
-    // printf("CONVERTED TIMESTAMP: %ld\n", timestamp);
+    timestamp = mktime(&timeStruct);  // struct tm to timestamp
     return timestamp;
 }
 
 void timestampToDatetimeString(time_t timestamp, char (*datetimeS)[MAX_DATETIME_SIZE]) {
-    // char* dateTimeSt;
-
-    // dateTimeSt = ctime(timestamp);
-
-    // struct tm timeStruct;
-    // if (strptime(ctime(&timestamp), "%a %b %d %H:%M:%S %Y\n", &timeStruct) != NULL) {
-    //     strftime(*datetimeS, MAX_DATETIME_SIZE, "%d-%m-%Y %H:%M", &timeStruct);
-    // } else {
-    //     perror("Time convert error");
-    //     return;
-    // }
-
     struct tm* timeStruct;
-    timeStruct = localtime(&timestamp);
+    timeStruct = localtime(&timestamp);  // convert to local time
 
     strftime(*datetimeS, MAX_DATETIME_SIZE, "%d-%m-%Y %H:%M", timeStruct);
-    //printf("cur time: %s\n", *datetimeS);
 
     return;
 }
 
 void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** transactionsFileName, int* bitcoinValue, int* senderHashTableSize,
                 int* receiverHashTableSize, int* bucketSizeBytes) {
+    // validate argument count
     if (argc != 13) {
         printError("Invalid arguments. Exiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
+    // validate input arguments one by one
     if (strcmp(argv[1], "-a") == 0) {
         (*bitcoinBalancesFileName) = argv[2];
     } else {
         printError("Invalid arguments\nExiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
     if (strcmp(argv[3], "-t") == 0) {
         (*transactionsFileName) = argv[4];
     } else {
         printError("Invalid arguments\nExiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
     if (strcmp(argv[5], "-v") == 0) {
         (*bitcoinValue) = atoi(argv[6]);
         if ((*bitcoinValue) <= 0) {
             printError("Invalid arguments\nExiting...\n");
-            exit(1);
+            raiseIntAndExit(1);
         }
     } else {
         printError("Invalid arguments\nExiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
     if (strcmp(argv[7], "-h1") == 0) {
         (*senderHashTableSize) = atoi(argv[8]);
         if ((*senderHashTableSize) <= 0) {
             printError("Invalid arguments\nExiting...\n");
-            exit(1);
+            raiseIntAndExit(1);
         }
     } else {
         printError("Invalid arguments\nExiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
     if (strcmp(argv[9], "-h2") == 0) {
         (*receiverHashTableSize) = atoi(argv[10]);
         if ((*receiverHashTableSize) <= 0) {
             printError("Invalid arguments\nExiting...\n");
-            exit(1);
+            raiseIntAndExit(1);
         }
     } else {
         printError("Invalid arguments\nExiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
     if (strcmp(argv[11], "-b") == 0) {
         (*bucketSizeBytes) = atoi(argv[12]);
         if ((*bucketSizeBytes) <= 0) {
             printError("Invalid arguments\nExiting...\n");
-            exit(1);
+            raiseIntAndExit(1);
         }
     } else {
         printError("Invalid arguments\nExiting...\n");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
     return;
@@ -378,40 +368,47 @@ void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinL
     (*walletList) = initWalletList();
     (*bitcoinList) = initBitcoinList();
 
-    char line[MAX_FILE_LINE_SIZE], walletId[MAX_WALLET_ID_SIZE], *token;
-    BitcoinList* curWalletBitcoinList;
+    char line[MAX_FILE_LINE_SIZE], walletId[MAX_WALLET_ID_SIZE], *token;  // token: pointer to traverse each line with strtok
+                                                                          // walletId: the wallet id that is read
+    BitcoinList* curWalletBitcoinList;                                    // curWalletBitcoinList: pointer that points to the bitcoin list of the current wallet at any given moment
     FILE* fileP;
-    int bitcoinId;
+    int bitcoinId;  // bitcoinId: the bitcoin id that is read
 
     if ((fileP = fopen(fileName, "r")) == NULL) {
         perror("fopen error");
-        exit(1);
+        raiseIntAndExit(1);
     }
 
+    // read file line by line, parse bitcoin balance data and save them to the corresponding structs
     while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
         token = strtok(line, " \n");
         if (token == NULL) {
             printError("Invalid bitcoin balances file");
-            exit(1);
+            raiseIntAndExit(1);
         }
-        strcpy(walletId, token);
+        strcpy(walletId, token);  // save wallet id
 
-        curWalletBitcoinList = initBitcoinList();  // caution!!!!!!!!!!! it is a pointer!!!!!!!!
+        // init a bitcoin list for the current wallet
+        curWalletBitcoinList = initBitcoinList();
 
+        // read all bitcoin ids and save them as bitcoins if they are valid
         while ((token = strtok(NULL, " ")) != NULL) {
             char* endptr;
             errno = 0;
-            bitcoinId = strtol(token, &endptr, 10);
+            bitcoinId = strtol(token, &endptr, 10);  // save bitcoin id
             if ((endptr == token) || ((bitcoinId == LONG_MAX || bitcoinId == LONG_MIN) && errno == ERANGE)) {
                 printError("Invalid bitcoin balances file\n");
-                exit(1);
+                freeBitcoinList(&curWalletBitcoinList, 0, 0);
+                raiseIntAndExit(1);
             }
 
-            // addBitcoinListNodeToBitcoinList(curWalletBitcoinList, bitcoinId, bitcoinValue); // add to wallet's list
-            addBitcoinListNodeToBitcoinListByPointer(curWalletBitcoinList, addBitcoinListNodeToBitcoinList((*bitcoinList), walletId, bitcoinId, bitcoinValue), walletId);
+            // first create and add a bitcoin list node to the main bitcoin list (addBitcoinListNodeToBitcoinList)
+            // and then add the new bitcoin tree's pointer to a new bitcoin list node of the bitcoin list of the current wallet (addBitcoinListNodeToBitcoinListByPointer)
+            addBitcoinListNodeToBitcoinListByBitcoinTreePointer(curWalletBitcoinList, addBitcoinListNodeToBitcoinList((*bitcoinList), walletId, bitcoinId, bitcoinValue)->bitcoinTree, walletId);
         }
 
-        addWalletToWalletList((*walletList), walletId, bitcoinValue * curWalletBitcoinList->size, curWalletBitcoinList);  // watch out with bitcoin list!!!!!!!!!
+        // create and add wallet to walletList
+        addWalletToWalletList((*walletList), walletId, bitcoinValue * curWalletBitcoinList->size, curWalletBitcoinList);
     }
 
     fclose(fileP);
@@ -421,150 +418,156 @@ void handleBitcoinBalancesFile(char* fileName, WalletList** walletList, BitcoinL
 
 void handleTransactionString(char* transactionS, WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, char withTransactionId, time_t* lastTransactionTimestamp) {
     int bitcoinAmount;
-    char *endptr, *token, *transactionId, *senderWalletId, *receiverWalletId, dateTimeS[MAX_DATETIME_SIZE];
-    char idS[MAX_STRING_INT_SIZE];
+    char *endptr, *token, *transactionId, *senderWalletId, *receiverWalletId, dateTimeS[MAX_DATETIME_SIZE],
+        *idS = NULL, transactionSTemp[MAX_INPUT_SIZE];  // endptr: pointer used by strtol
+                                                        // token: pointer to traverse each line with strtok
+                                                        // transactionId: the transaction id that is read/generated
+                                                        // senderWalletId: the sender wallet id that is read
+                                                        // receiverWalletId: the receiver wallet id that is read
+                                                        // dateTimeS: the date time string that is read
+                                                        // idS: the transaction id string that may be generated if transaction id does not exist
+                                                        // transactionSTemp: temporary transaction string copy that is used to manipulate the transaction string without modifying the pointer
 
-    char transactionSTemp[MAX_INPUT_SIZE];
     strcpy(transactionSTemp, transactionS);
 
-    //printf("transaction string: %s\n", transactionSTemp);
-
-    if (withTransactionId == 1) {
+    if (withTransactionId == 1) {  // transaction id is given as input in transactionS
         transactionId = strtok(transactionSTemp, " ");
         if (transactionId == NULL) {
             printError("Invalid transactions string\n");
             return;
         }
-
-        // errno = 0;
-        // transactionId = strtol(token, &endptr, 10);
-        // if ((endptr == token) || ((transactionId == LONG_MAX || transactionId == LONG_MIN) && errno == ERANGE)) {
-        //     printf("Invalid transactions file");
-        //     exit(1);
-        // }
-        // strcpy(transactionId, token);
-        //printf("transaction id: %s\n\n", transactionId);
-    } else {
+    } else {  // transaction id is not given as input in transactionS so we must generate a unique transaction id
+        idS = (char*)malloc(MAX_STRING_INT_SIZE);
         int id = rand();
         sprintf(idS, "%d", id);
-        while (findTransactionInHashTable(senderHashTable, idS) != NULL) {
+        while (findTransactionInHashTable(senderHashTable, idS) != NULL) {  // while generated transaction id is not unique, generate a different one
             id = rand();
             sprintf(idS, "%d", id);
         }
-
-        transactionId = idS;
+        transactionId = idS;  // point to the generated transaction id
     }
 
     if (withTransactionId == 1) {
+        // continue tokenizing
         senderWalletId = strtok(NULL, " ");
     } else {
+        // start tokenizing from the beginning
         senderWalletId = strtok(transactionSTemp, " ");
     }
     if (senderWalletId == NULL) {
         printError("Invalid transactions string\n");
+        freeString(&idS);
         return;
     }
-    // strcpy(senderWalletId, token);
 
     receiverWalletId = strtok(NULL, " ");
     if (receiverWalletId == NULL) {
         printError("Invalid transactions string\n");
+        freeString(&idS);
         return;
     }
-    // strcpy(receiverWalletId, token);
 
     token = strtok(NULL, " ");
     if (token == NULL) {
         printError("Invalid transactions string\n");
+        freeString(&idS);
         return;
     }
+
     errno = 0;
     bitcoinAmount = strtol(token, &endptr, 10);
     if (((endptr == token) || ((bitcoinAmount == LONG_MAX || bitcoinAmount == LONG_MIN) && errno == ERANGE)) || bitcoinAmount <= 0) {
-        //printf("token: %s\n", token);
         printError("Invalid transactions string\n");
+        freeString(&idS);
         return;
     }
-    //printf("transaction id: %s\n\n", transactionId);
 
     token = strtok(NULL, "\n");
     if (token == NULL || strcmp(token, "") == 0) {
+        // generate current datetime
         timestampToDatetimeString(time(NULL), &dateTimeS);
     } else {
         strcpy(dateTimeS, token);
     }
-    // strcpy(transactionId, strtok(transactionS, " "));
-    // printf("transaction id, datetimeS: %s, %s\n\n", transactionId, dateTimeS);
+
     time_t curTransactionTimestamp = datetimeStringToTimeStamp(dateTimeS);
     if (curTransactionTimestamp == -1) {
+        printError("Invalid transactions string\n");
+        freeString(&idS);
         return;
     }
-    // printf("CURRENT TIMESTAMP: %ld\n", curTransactionTimestamp);
-    if (curTransactionTimestamp < (*lastTransactionTimestamp)) {  // < : because the precision is in minutes
+
+    if (curTransactionTimestamp < (*lastTransactionTimestamp)) {  // < instead of <= : because the precision is in minutes so we are not strict with the timestamp validity
         printError("Transaction date is old\n");
+        freeString(&idS);
         return;
     } else {
+        // update last transaction's timestamp
         (*lastTransactionTimestamp) = curTransactionTimestamp;
     }
 
-    // printf("sender id: |%s|\n", senderWalletId);
-
+    // see if there are wallets with the given wallet ids
     Wallet* foundSenderWallet = findWalletInWalletList(walletList, senderWalletId);
     if (foundSenderWallet == NULL) {
         printError("Sender wallet id does not exist\n");
-        // return;
+        freeString(&idS);
         return;
     }
     Wallet* foundReceiverWallet = findWalletInWalletList(walletList, receiverWalletId);
     if (foundReceiverWallet == NULL) {
         printError("Receiver wallet id does not exist\n");
-        // return;
-        return;
-    }
-    //printf("transaction id: %s\n\n", transactionId);
-
-    // Transaction* foundTransaction = find ////// HERE CHECK IF TRANSACTION ALREADY EXISTSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
-    if (findTransactionInHashTable(senderHashTable, transactionId) != NULL) {
-        printError("Duplicate transaction id\n");
+        freeString(&idS);
         return;
     }
 
-    // printf("sender wallet balance: %d, amount: %d\n", foundSenderWallet->balance, bitcoinAmount);
+    if (withTransactionId == 1) {  // only if we are using the given transaction id
+        // see if transaction already exists
+        if (findTransactionInHashTable(senderHashTable, transactionId) != NULL) {
+            printError("Duplicate transaction id\n");
+            freeString(&idS);
+            return;
+        }
+    }
 
+    // check if transaction can be made
     if (foundSenderWallet->balance < bitcoinAmount) {
         printError("Insufficient balance\n");
+        freeString(&idS);
         return;
     }
 
-    // BitcoinList* transactionBitcoinList = initBitcoinList();  // NOT USED!!!!!!!!!!!!!!!! (YET)
-    Transaction* createdTransaction = initTransaction(transactionId, bitcoinAmount, senderWalletId, receiverWalletId, dateTimeS);
-    //printf("hello1.5\n");
     printf(ANSI_COLOR_YELLOW "Transaction started\n" ANSI_COLOR_RESET);
+    Transaction* createdTransaction = initTransaction(transactionId, bitcoinAmount, senderWalletId, receiverWalletId, dateTimeS);
+
+    // try to make the transaction by transfering the amount of dollars and the bitcoins from sender wallet to receiver wallet and by updating the used bitcoin trees
     if (handleWalletToWalletTransfer(foundSenderWallet, foundReceiverWallet, createdTransaction) == -1) {
         printError("Transaction not completed\n");
         freeTransaction(&createdTransaction);
+        freeString(&idS);
         return;
     }
-    // printf("balances: %d, %d\n", foundSenderWallet->balance, foundReceiverWallet->balance);
-    //printf("hello2\n");
 
+    // update sender and receiver hash tables
     insertTransactionToHashTable(senderHashTable, createdTransaction, SENDER);
     insertTransactionToHashTable(receiverHashTable, createdTransaction, RECEIVER);
 
     printf(ANSI_COLOR_YELLOW "Transaction finished\n" ANSI_COLOR_RESET);
-    //printf("end\n");
+
+    freeString(&idS);
 }
 
 void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
                             time_t* lastTransactionTimestamp) {
-    char line[MAX_FILE_LINE_SIZE] /*, senderWalletId[MAX_WALLET_ID_SIZE], receiverWalletId[MAX_WALLET_ID_SIZE], dateTimeS[MAX_DATETIME_SIZE], *token*/;
+    char line[MAX_FILE_LINE_SIZE];
     FILE* fileP;
 
     if ((fileP = fopen(fileName, "r")) == NULL) {
         perror("fopen error");
-        exit(1);
+        raise(SIGINT);
+        raiseIntAndExit(1);
     }
 
+    // handle each line of transactions' file
     while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
         handleTransactionString(line, walletList, senderHashTable, receiverHashTable, 1, lastTransactionTimestamp);
     }
@@ -573,12 +576,10 @@ void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTabl
 }
 
 void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, time_t* lastTransactionTimestamp) {
-    char inputS[MAX_INPUT_SIZE], inputSCopy[MAX_INPUT_SIZE], *token, *endptr;
+    char inputS[MAX_INPUT_SIZE], inputSCopy[MAX_INPUT_SIZE], *token, *endptr;  // inputSCopy: copy of input string to manipulate the pure form of the input after modifying inputS string
 
     printf("\nType a command: ");
     fgets(inputS, MAX_INPUT_SIZE, stdin);
-    // removeSpaces(inputS);
-    //printf("inputS: %s\n", inputS);
     strcpy(inputSCopy, inputS);
 
     token = strtok(inputS, " ");
@@ -586,58 +587,59 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
         printError("Invalid input, try again\n");
         printf("\nType a command: ");
         fgets(inputS, MAX_INPUT_SIZE, stdin);
-        // removeSpaces(inputS);
         strcpy(inputSCopy, inputS);
         token = strtok(inputS, " ");
     }
 
     while (strcmp(token, "./exit\n") != 0) {
-        //printf("token: %s\n", token);
         printf("\n");
         if (!strcmp(token, "./requestTransaction")) {
-            //printf("TRANSACTION LAST TIMESTAMP: %ld\n", *lastTransactionTimestamp);
+            // handle the rest of the input as a single transaction
             handleTransactionString(strtok(NULL, "\n"), walletList, senderHashTable, receiverHashTable, 0, lastTransactionTimestamp);
         } else if (!strcmp(token, "./requestTransactions")) {
             token = strtok(NULL, ";");
-            //printf("token1: %s\n", token);
-            char* tToken = strtok(token, " ");
-            tToken = strtok(NULL, " ");
-            if (tToken == NULL) {
-                //printf("hello1\n");
-                token = strtok(inputSCopy, " ");
-                token = strtok(NULL, "\n");  // input file name
-                handleTransactionsFile(token, senderHashTable, receiverHashTable, bitcoinList, walletList, lastTransactionTimestamp);
+            if (token == NULL) {
+                printError("Invalid input, try again\n");
             } else {
-                //printf("hello2\n");
-                //printf("inpuS: %s\n", inputSCopy);
-                char* rest = inputSCopy;
-                token = strtok_r(rest, " ", &rest);
-                token = strtok_r(rest, ";", &rest);
-                // printf("token2: %s\n", token);
-                while (token != NULL && strcmp(token, "") && strcmp(token, "\n")) {
-                    //printf("token2: %s\n", token);
-                    handleTransactionString(token, walletList, senderHashTable, receiverHashTable, 0, lastTransactionTimestamp);
-                    // token = strtok(inputS, " ");
-                    token = strtok_r(rest, ";", &rest);
+                char* tToken = strtok(token, " ");
+                if (tToken == NULL) {
+                    printError("Invalid input, try again\n");
+                } else {
+                    tToken = strtok(NULL, " ");
+                    if (tToken == NULL) {  // filename is given as input
+                        token = strtok(inputSCopy, " ");
+                        token = strtok(NULL, "\n");  // input file name
+                        handleTransactionsFile(token, senderHashTable, receiverHashTable, bitcoinList, walletList, lastTransactionTimestamp);
+                    } else {  // transaction strings are given as input
+                        char* rest = inputSCopy;
+                        token = strtok_r(rest, " ", &rest);
+                        token = strtok_r(rest, ";", &rest);
+                        while (token != NULL && strcmp(token, "") && strcmp(token, "\n")) {
+                            // handle each transaction string
+                            handleTransactionString(token, walletList, senderHashTable, receiverHashTable, 0, lastTransactionTimestamp);
+                            token = strtok_r(rest, ";", &rest);
+                        }
+                    }
                 }
             }
         } else if (!strcmp(token, "./findEarnings") || !strcmp(token, "./findPayments")) {
-            char findEarnings = strcmp(token, "./findEarnings") == 0 ? 1 : 0;
-            char *walletId, *time1S, *time2S, *date1S, *date2S;
-            char* rest;
+            char findEarnings = strcmp(token, "./findEarnings") == 0 ? 1 : 0;  // findEarnings: flag useful for searching in the appropriate hash table
+            char *walletId, *time1S, *time2S, *date1S, *date2S;                // walletId: walletId that is read
+                                                                               // timeXS: time string that is read (X = 1 or 2)
+                                                                               // dateXS: date string that is read (X = 1 or 2)
+            char* rest;                                                        // rest: pointer that is used to traverse the input string with function strtok_r
             walletId = strtok(NULL, " \n");
             if (walletId == NULL) {
                 printError("Invalid input, try again\n");
             } else {
-                // printf("walletId: %s\n", walletId);
+                // get all transactions of current wallet id from hash table (receiver or sender)
                 TransactionList* foundTransactionList = findTransactionListInHashTable(findEarnings == 1 ? receiverHashTable : senderHashTable, walletId);
-                //printf("hey\n");
                 if (foundTransactionList == NULL) {
                     printf(ANSI_COLOR_YELLOW "No transactions found for this wallet id\n" ANSI_COLOR_RESET);
                 } else {
                     token = strtok(NULL, " ");
-                    if (token == NULL) {  // no time and date
-                        //printf("token null1\n");
+                    if (token == NULL) {  // no time and date is given as input
+                        // print all found transactions sorted by timestamp and print sum bitcoin amount
                         printTransactionsFromTransactionList(foundTransactionList, NULL, NULL, NULL, NULL, findEarnings);
                     } else {
                         token = strtok(NULL, " ");
@@ -645,42 +647,37 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                             printError("Invalid input, try again\n");
                         } else {
                             token = strtok(NULL, " ");
-                            if (token == NULL) {  // only time1 and time2 or only date1 and date2
+                            if (token == NULL) {  // only time1 and time2 or only date1 and date2 are given as input
                                 rest = inputSCopy;
                                 token = strtok_r(rest, " ", &rest);
                                 token = strtok_r(rest, " ", &rest);
                                 time1S = strtok_r(rest, " ", &rest);
-                                //printf("%s\n", time1S);
-                                //printf("hello\n");
                                 if (validateTimeS(time1S) == -1) {
                                     date1S = time1S;
-                                    // printf("date1: %s\n", date1S);
                                     if (validateDateS(date1S) == -1) {
                                         printError("Invalid input, try again\n");
-                                    } else {  // only date1 and date2
+                                    } else {  // only date1 and date2 are given as input
                                         date2S = strtok_r(rest, "\n", &rest);
                                         if (validateDateS(date2S) == -1) {
                                             printError("Invalid input, try again\n");
                                         } else {
-                                            // printf("date1: %s, date2: %s\n", date1S, date2S);
                                             if (compareDatesS(date1S, date2S) > 0) {
-                                                printError("date1 must be less than date2, try again\n");
+                                                printError("date1 must be less than or equal with date2, try again\n");
                                             } else {
-                                                // printf("date1: %s, date2: %s\n", date1S, date2S);
+                                                // print transaction with date1S < date < date2S sorted by timestamp and print sum bitcoin amount
                                                 printTransactionsFromTransactionList(foundTransactionList, NULL, date1S, NULL, date2S, findEarnings);
                                             }
                                         }
                                     }
-                                } else {  // only time1 and time2
+                                } else {  // only time1 and time2 are given as input
                                     time2S = strtok_r(rest, "\n", &rest);
-                                    //printf("time2S: %s\n", time2S);
                                     if (validateTimeS(time2S) == -1) {
                                         printError("Invalid input, try again\n");
                                     } else {
-                                        // printf("time1: %s, time2: %s\n", time1S, time2S);
                                         if (compareTimesS(time1S, time2S) > 0) {
-                                            printError("time1 must be less than time2, try again\n");
+                                            printError("time1 must be less than or equal with time2, try again\n");
                                         } else {
+                                            // print transaction with time1S < time < time2S sorted by timestamp and print sum bitcoin amount
                                             printTransactionsFromTransactionList(foundTransactionList, time1S, NULL, time2S, NULL, findEarnings);
                                         }
                                     }
@@ -689,7 +686,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                                 token = strtok(NULL, " ");
                                 if (token == NULL) {
                                     printError("Invalid input, try again\n");
-                                } else {  // time1, time2, date1, date2
+                                } else {  // time1, time2, date1, date2 are given as input
                                     rest = inputSCopy;
                                     token = strtok_r(rest, " ", &rest);
                                     token = strtok_r(rest, " ", &rest);
@@ -711,12 +708,12 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                                                     printError("Invalid input, try again\n");
                                                 } else {  // all values are valid
                                                     if (compareTimesS(time1S, time2S) > 0) {
-                                                        printError("time1 must be less than time2, try again\n");
+                                                        printError("time1 must be less than or equal with time2, try again\n");
                                                     } else {
                                                         if (compareDatesS(date1S, date2S) > 0) {
-                                                            printError("date1 must be less than date2, try again\n");
+                                                            printError("date1 must be less than or equal with date2, try again\n");
                                                         } else {
-                                                            // printf("time1: %s, date1: %s, time2: %s, date2: %s\n", time1S, date1S, time2S, date2S);
+                                                            // print transaction with time1S < time < time2S and date1S < date < date2S sorted by timestamp and print sum bitcoin amount
                                                             printTransactionsFromTransactionList(foundTransactionList, time1S, date1S, time2S, date2S, findEarnings);
                                                         }
                                                     }
@@ -754,10 +751,10 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                     int bitcoinId = strtol(token, &endptr, 10);
                     if ((endptr == token) || ((bitcoinId == LONG_MAX || bitcoinId == LONG_MIN) && errno == ERANGE)) {
                         printError("Invalid bitcoin id\n");
-                        exit(1);
+                        raiseIntAndExit(1);
                     }
                     int unspentAmount = getUnspentAmountOfBitcoin(bitcoinList, bitcoinId);
-                    int transactionsNum = getTransactionsNumOfBitcoinById(bitcoinList, bitcoinId);
+                    int transactionsNum = getTransactionsNumOfBitcoin(bitcoinList, bitcoinId);
                     if (unspentAmount == -1 || transactionsNum == -1) {
                         printf(ANSI_COLOR_YELLOW "\nNo results\n" ANSI_COLOR_RESET);
                     } else {
@@ -777,15 +774,17 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                     int bitcoinId = strtol(token, &endptr, 10);
                     if ((endptr == token) || ((bitcoinId == LONG_MAX || bitcoinId == LONG_MIN) && errno == ERANGE)) {
                         printError("Invalid bitcoin id\n");
-                        exit(1);
+                        raiseIntAndExit(1);
                     }
                     TransactionList* tempTransactionList = initTransactionList(NULL);
                     getTransactionsOfBitcoin(bitcoinList, bitcoinId, tempTransactionList);
                     if (tempTransactionList->size == 0) {
                         printf(ANSI_COLOR_YELLOW "No transactions found\n" ANSI_COLOR_RESET);
                     } else {
+                        // print transactions of current bitcoin
                         printTransactionsOfTransactionListSimple(tempTransactionList);
                     }
+                    // free transactions list and transactions
                     freeTransactionList(&tempTransactionList, 1);
                 }
             }
@@ -796,14 +795,12 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
 
         printf("\nType a command: ");
         fgets(inputS, MAX_INPUT_SIZE, stdin);
-        // removeSpaces(inputS);
         strcpy(inputSCopy, inputS);
         token = strtok(inputS, " ");
         while (token == NULL) {
             printError("Invalid input, try again\n");
             printf("\nType a command: ");
             fgets(inputS, MAX_INPUT_SIZE, stdin);
-            // removeSpaces(inputS);
             strcpy(inputSCopy, inputS);
             token = strtok(inputS, " ");
         }
@@ -813,10 +810,11 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
 }
 
 void freeMemory(HashTable** senderHashTable, HashTable** receiverHashTable, BitcoinList** bitcoinList, WalletList** walletList) {
-    freeHashTable(senderHashTable, 1);
-    freeHashTable(receiverHashTable, 0);  // 0 to prevent double free
-    freeBitcoinList(bitcoinList, 1, 0);   // 0 to prevent double free
-    freeWalletList(walletList);
+    freeHashTable(senderHashTable, 1);    // 1 is given as a parameter to free the transactions as well
+    freeHashTable(receiverHashTable, 0);  // 0 is given as a parameter to prevent double free of transactions
+    freeBitcoinList(bitcoinList, 1, 0);   // 1 is given as a parameter to free the bitcoin trees as well
+                                          // 0 is given as a parameter to prevent double free of transactions
+    freeWalletList(walletList);           // frees walletList without double freeing neither the transactions nor the bitcoin trees
 
     printf(ANSI_COLOR_YELLOW "\nMemory freed\n" ANSI_COLOR_RESET);
 

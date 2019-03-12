@@ -7,7 +7,7 @@ static WalletList* walletList;
 
 void intHandler(int dummy) {
     freeMemory(&senderHashTable, &receiverHashTable, &bitcoinList, &walletList);
-    exit(0);
+    exit(1);
 }
 
 int main(int argc, char** argv) {
