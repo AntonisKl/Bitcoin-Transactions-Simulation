@@ -127,7 +127,7 @@ void handleLogRec(char* walletId, Transaction* transaction, int* amount, Bitcoin
                                                                  NULL);
     }
 
-    (*amount) -= receiverAmount; // update remaining amount of dollars for transation to be completed
+    (*amount) -= receiverAmount;  // update remaining amount of dollars for transation to be completed
 
     handleLogRec(walletId, transaction, amount, nextBitcoinTreeNode->receiverNode);
     handleLogRec(walletId, transaction, amount, nextBitcoinTreeNode->remainingNode);
@@ -204,7 +204,6 @@ void freeBitcoinListNodeRec(BitcoinListNode** bitcoinListNode, char shouldFreeBi
     return;
 }
 
-
 void freeBitcoinList(BitcoinList** bitcoinList, char shouldFreeBitcoinTrees, char shouldFreeTransactions) {
     if ((*bitcoinList) == NULL)
         return;
@@ -244,7 +243,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char*
         bitcoinList->firstNode = initBitcoinListNode(initBitcoinTree(startAmount, walletId, bitcoinId));
 
         bitcoinList->size++;
-        printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d to BitcoinList\n" ANSI_COLOR_RESET, bitcoinId);
+        printf("Inserted bitcoin with id %d to BitcoinList\n", bitcoinId);
         return bitcoinList->firstNode;
     } else {
         BitcoinListNode* curBitcoinListNode = bitcoinList->firstNode;
@@ -257,7 +256,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char*
             curBitcoinListNode->prevNode = bitcoinListNodeToInsert;
             bitcoinList->firstNode = bitcoinListNodeToInsert;
             bitcoinList->size++;
-            printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d to BitcoinList\n" ANSI_COLOR_RESET, bitcoinId);
+            printf("Inserted bitcoin with id %d to BitcoinList\n", bitcoinId);
             return bitcoinList->firstNode;
         }
         while (curBitcoinListNode != NULL) {
@@ -270,7 +269,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char*
                     curBitcoinListNode->nextNode->prevNode = bitcoinListNodeToInsert;
                     curBitcoinListNode->nextNode = bitcoinListNodeToInsert;
                     bitcoinList->size++;
-                    printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d to BitcoinList\n" ANSI_COLOR_RESET, bitcoinId);
+                    printf("Inserted bitcoin with id %d to BitcoinList\n", bitcoinId);
                     return curBitcoinListNode->nextNode;
                 }
             } else {
@@ -279,7 +278,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinList(BitcoinList* bitcoinList, char*
                 curBitcoinListNode->nextNode->prevNode = curBitcoinListNode;
 
                 bitcoinList->size++;
-                printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d to BitcoinList\n" ANSI_COLOR_RESET, bitcoinId);
+                printf("Inserted bitcoin with id %d to BitcoinList\n", bitcoinId);
                 return curBitcoinListNode->nextNode;
             }
 
@@ -299,7 +298,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinListByBitcoinTreePointer(BitcoinList
         bitcoinList->firstNode = initBitcoinListNode(bitcoinTree);
 
         bitcoinList->size++;
-        printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d by pointer to BitcoinList of %s\n" ANSI_COLOR_RESET, bitcoinTree->bitcoinId, receiverWalletId);
+        printf("Inserted bitcoin with id %d by pointer to BitcoinList of %s\n", bitcoinTree->bitcoinId, receiverWalletId);
         return bitcoinList->firstNode;
     } else {
         BitcoinListNode* curBitcoinListNode = bitcoinList->firstNode;
@@ -312,7 +311,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinListByBitcoinTreePointer(BitcoinList
             curBitcoinListNode->prevNode = bitcoinListNodeToInsert;
             bitcoinList->firstNode = bitcoinListNodeToInsert;
             bitcoinList->size++;
-            printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d by pointer to BitcoinList of %s\n" ANSI_COLOR_RESET, bitcoinTree->bitcoinId, receiverWalletId);
+            printf("Inserted bitcoin with id %d by pointer to BitcoinList of %s\n", bitcoinTree->bitcoinId, receiverWalletId);
             return bitcoinList->firstNode;
         }
         while (curBitcoinListNode != NULL) {
@@ -325,7 +324,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinListByBitcoinTreePointer(BitcoinList
                     curBitcoinListNode->nextNode->prevNode = bitcoinListNodeToInsert;
                     curBitcoinListNode->nextNode = bitcoinListNodeToInsert;
                     bitcoinList->size++;
-                    printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d by pointer to BitcoinList of %s\n" ANSI_COLOR_RESET, bitcoinTree->bitcoinId, receiverWalletId);
+                    printf("Inserted bitcoin with id %d by pointer to BitcoinList of %s\n", bitcoinTree->bitcoinId, receiverWalletId);
                     return curBitcoinListNode->nextNode;
                 }
             } else {
@@ -334,7 +333,7 @@ BitcoinListNode* addBitcoinListNodeToBitcoinListByBitcoinTreePointer(BitcoinList
                 curBitcoinListNode->nextNode->prevNode = curBitcoinListNode;
 
                 bitcoinList->size++;
-                printf(ANSI_COLOR_BLUE "Inserted bitcoin with id %d by pointer to BitcoinList of %s\n" ANSI_COLOR_RESET, bitcoinTree->bitcoinId, receiverWalletId);
+                printf("Inserted bitcoin with id %d by pointer to BitcoinList of %s\n", bitcoinTree->bitcoinId, receiverWalletId);
                 return curBitcoinListNode->nextNode;
             }
 

@@ -365,7 +365,6 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
 }
 
 void handleBitcoinBalancesFile(char* fileName, WalletList* walletList, BitcoinList* bitcoinList, int bitcoinValue) {
-
     char line[MAX_FILE_LINE_SIZE], walletId[MAX_WALLET_ID_SIZE], *token;  // token: pointer to traverse each line with strtok
                                                                           // walletId: the wallet id that is read
     BitcoinList* curWalletBitcoinList;                                    // curWalletBitcoinList: pointer that points to the bitcoin list of the current wallet at any given moment
@@ -382,6 +381,7 @@ void handleBitcoinBalancesFile(char* fileName, WalletList* walletList, BitcoinLi
         token = strtok(line, " \n");
         if (token == NULL) {
             printError("Invalid bitcoin balances file");
+            fclose(fileP);
             raiseIntAndExit(1);
         }
         strcpy(walletId, token);  // save wallet id
@@ -397,6 +397,7 @@ void handleBitcoinBalancesFile(char* fileName, WalletList* walletList, BitcoinLi
             if ((endptr == token) || ((bitcoinId == LONG_MAX || bitcoinId == LONG_MIN) && errno == ERANGE)) {
                 printError("Invalid bitcoin balances file\n");
                 freeBitcoinList(&curWalletBitcoinList, 0, 0);
+                fclose(fileP);
                 raiseIntAndExit(1);
             }
 
@@ -495,15 +496,6 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
         return;
     }
 
-    if (curTransactionTimestamp < (*lastTransactionTimestamp)) {  // < instead of <= : because the precision is in minutes so we are not strict with the timestamp validity
-        printError("Transaction date is old\n");
-        freeString(&idS);
-        return;
-    } else {
-        // update last transaction's timestamp
-        (*lastTransactionTimestamp) = curTransactionTimestamp;
-    }
-
     // see if there are wallets with the given wallet ids
     Wallet* foundSenderWallet = findWalletInWalletList(walletList, senderWalletId);
     if (foundSenderWallet == NULL) {
@@ -534,7 +526,16 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
         return;
     }
 
-    printf(ANSI_COLOR_YELLOW "Transaction started\n" ANSI_COLOR_RESET);
+    if (curTransactionTimestamp < (*lastTransactionTimestamp)) {  // < instead of <= : because the precision is in minutes so we are not strict with the timestamp validity
+        printError("Transaction date is old\n");
+        freeString(&idS);
+        return;
+    } else {
+        // update last transaction's timestamp
+        (*lastTransactionTimestamp) = curTransactionTimestamp;
+    }
+
+    printf(ANSI_COLOR_YELLOW "Transaction with id %s started\n" ANSI_COLOR_RESET, transactionId);
     Transaction* createdTransaction = initTransaction(transactionId, bitcoinAmount, senderWalletId, receiverWalletId, dateTimeS);
 
     // try to make the transaction by transfering the amount of dollars and the bitcoins from sender wallet to receiver wallet and by updating the used bitcoin trees
@@ -549,7 +550,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
     insertTransactionToHashTable(senderHashTable, createdTransaction, SENDER);
     insertTransactionToHashTable(receiverHashTable, createdTransaction, RECEIVER);
 
-    printf(ANSI_COLOR_YELLOW "Transaction finished\n" ANSI_COLOR_RESET);
+    printf(ANSI_COLOR_YELLOW "Transaction with id %s finished\n" ANSI_COLOR_RESET, transactionId);
 
     freeString(&idS);
 }
