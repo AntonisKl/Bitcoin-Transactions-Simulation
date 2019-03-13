@@ -568,7 +568,7 @@ void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTabl
 
     // handle each line of transactions' file
     while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
-        handleTransactionString(line, walletList, senderHashTable, receiverHashTable, 1, lastTransactionTimestamp);
+        handleTransactionString(strtok(line, "\n;"), walletList, senderHashTable, receiverHashTable, 1, lastTransactionTimestamp);
     }
 
     fclose(fileP);
@@ -612,11 +612,11 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                     } else {  // transaction strings are given as input
                         char* rest = inputSCopy;
                         token = strtok_r(rest, " ", &rest);
-                        token = strtok_r(rest, ";", &rest);
+                        token = strtok_r(rest, "\n;", &rest);
                         while (token != NULL && strcmp(token, "") && strcmp(token, "\n")) {
                             // handle each transaction string
                             handleTransactionString(token, walletList, senderHashTable, receiverHashTable, 0, lastTransactionTimestamp);
-                            token = strtok_r(rest, ";", &rest);
+                            token = strtok_r(rest, "\n;", &rest);
                         }
                     }
                 }

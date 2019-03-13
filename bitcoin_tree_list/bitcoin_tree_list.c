@@ -381,19 +381,6 @@ int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int*
     return 0;
 }
 
-TransactionList* findTransactionsInBitcoinList(BitcoinList* bitcoinList, int bitcoinId) {
-    BitcoinListNode* foundBitcoinListNode = findBitcoinListNodeInBitcoinList(bitcoinList, bitcoinId);
-    if (foundBitcoinListNode == NULL) {
-        printf("Bitcoin with id %d not found in bitcoins' list\n", bitcoinId);
-        return NULL;
-    }
-
-    TransactionList* foundTransactionList = initTransactionList(NULL);
-    getTransactionsOfBitcoinTreeRec(foundTransactionList, foundBitcoinListNode->bitcoinTree->rootNode);
-
-    return foundTransactionList;
-}
-
 int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId) {
     BitcoinListNode* foundBitcoinListNode = findBitcoinListNodeInBitcoinList(bitcoinList, bitcoinId);
     if (foundBitcoinListNode == NULL) {

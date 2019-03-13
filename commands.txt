@@ -4,7 +4,13 @@
 ./findPayments richard 10:50 14-11-2019 22:13 01-02-2023
 ./findEarnings 43 14-11-2016 01-02-2019
 ./requestTransactions richard crystalsmith 30 11-01-2025 15:15;crystalsmith richard 30 11-12-2025 14:46;
+./requestTransactions transactions
 ./requestTransaction crystalsmith richard 100 27-04-2021 19:25
-./requestTransaction richard crystalsmith 18 27-04-2021 19:27
+./requestTransaction richard crystalsmith 18 27-04-2026 19:27
 ./traceCoin 432
+./bitCoinStatus 432
 ./walletStatus richard
+
+./requestTransaction norvaldach crystalsmith 21 14-13-2027 15:11
+./traceCoin 692
+./bitCoinStatus 692

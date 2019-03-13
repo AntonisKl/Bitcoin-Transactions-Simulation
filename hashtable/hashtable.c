@@ -6,16 +6,16 @@ Transaction* initTransaction(char* transactionId, int amount, char* senderWallet
     Transaction* transaction = (Transaction*)malloc(sizeof(Transaction));
     transaction->amount = amount;
 
-    transaction->transactionId = (char*)malloc(MAX_TRANSACTION_ID_SIZE);
+    transaction->transactionId = (char*)malloc(strlen(transactionId) + 1);
     strcpy(transaction->transactionId, transactionId);
 
-    transaction->senderWalletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+    transaction->senderWalletId = (char*)malloc(strlen(senderWalletId) + 1);
     strcpy(transaction->senderWalletId, senderWalletId);
 
-    transaction->receiverWalletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+    transaction->receiverWalletId = (char*)malloc(strlen(receiverWalletId) + 1);
     strcpy(transaction->receiverWalletId, receiverWalletId);
 
-    transaction->datetimeS = (char*)malloc(MAX_DATETIME_SIZE);
+    transaction->datetimeS = (char*)malloc(strlen(datetimeS) + 1);
     strcpy(transaction->datetimeS, datetimeS);
 
     transaction->timestamp = datetimeStringToTimeStamp(datetimeS);
@@ -61,7 +61,7 @@ void freeTransactionRec(Transaction** transaction) {
 TransactionList* initTransactionList(char* walletId) {
     TransactionList* transactionList = (TransactionList*)malloc(sizeof(TransactionList));
     if (walletId != NULL) {
-        transactionList->walletId = (char*)malloc(MAX_WALLET_ID_SIZE);
+        transactionList->walletId = (char*)malloc(strlen(walletId) + 1);
         strcpy(transactionList->walletId, walletId);
     } else {
         transactionList->walletId = NULL;

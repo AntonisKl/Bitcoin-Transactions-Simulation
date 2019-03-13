@@ -110,10 +110,6 @@ int deleteBitcoinListNodeFromBitcoinList(BitcoinList* bitcoinList, int bitcoinId
 // amount: amount in dollars that are remaining in order for the transaction to be completed
 int addLogToBitcoinTree(BitcoinTree* bitcoinTree, Transaction* transaction, int* amount);
 
-// returns NULL if bitcoin list node with bitcoin id bitcoinId is not found in bitcoinList
-// else, returns sorted transaction list by timestamp
-TransactionList* findTransactionsInBitcoinList(BitcoinList* bitcoinList, int bitcoinId);
-
 // returns -1 if bitcoin list node with bitcoin id bitcoinId is not found in bitcoinList
 int getUnspentAmountOfBitcoin(BitcoinList* bitcoinList, int bitcoinId);
 
