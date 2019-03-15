@@ -95,12 +95,8 @@ void getTransactionsNumOfBitcoinRec(int* transactionsNum, TransactionList* found
 
     Transaction* curTransaction = nextBitcoinTreeNode->transaction;
 
-    if (curTransaction != NULL && addTransactionToTransactionListSorted(foundTransactionsList,
-                                                                        initTransaction(curTransaction->transactionId,
-                                                                                        curTransaction->amount,
-                                                                                        curTransaction->senderWalletId,
-                                                                                        curTransaction->receiverWalletId,
-                                                                                        curTransaction->datetimeS)) != NULL) {
+    if (curTransaction != NULL && addTransactionListNodeToTransactionListSorted(foundTransactionsList,
+                                                                                curTransaction) != NULL) {
         // only if there is a transaction in the curent node and this transaction is not the same with a transaction that we have already encountered
         // increment the number of found transactions
         (*transactionsNum)++;
@@ -141,12 +137,8 @@ void getTransactionsOfBitcoinTreeRec(TransactionList* foundTransactionList, Bitc
 
     if (nextBitcoinTreeNode->transaction != NULL) {
         Transaction* curTransaction = nextBitcoinTreeNode->transaction;
-        addTransactionToTransactionListSorted(foundTransactionList,
-                                              initTransaction(curTransaction->transactionId,
-                                                              curTransaction->amount,
-                                                              curTransaction->senderWalletId,
-                                                              curTransaction->receiverWalletId,
-                                                              curTransaction->datetimeS));
+        addTransactionListNodeToTransactionListSorted(foundTransactionList,
+                                              curTransaction);
     }
 
     getTransactionsOfBitcoinTreeRec(foundTransactionList, nextBitcoinTreeNode->receiverNode);
@@ -415,7 +407,7 @@ int getTransactionsNumOfBitcoin(BitcoinList* bitcoinList, int bitcoinId) {
 
     getTransactionsNumOfBitcoinRec(&transactionsNum, foundTransactionsList, foundBitcoinListNode->bitcoinTree->rootNode);
 
-    freeTransactionList(&foundTransactionsList, 1);
+    freeTransactionList(&foundTransactionsList, 0);
 
     return transactionsNum;
 }

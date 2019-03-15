@@ -10,11 +10,15 @@ typedef struct Transaction {
     char *transactionId, *senderWalletId, *receiverWalletId, *datetimeS;  // datetimeS: valid datetime string as it was read
     time_t timestamp;                                                     // unix timestamp in seconds
     int amount;                                                           // dollars
-    struct Transaction* nextTransaction;
 } Transaction;
 
+typedef struct TransactionListNode {
+    Transaction* transaction;
+    struct TransactionListNode* nextTransactionListNode;
+} TransactionListNode;
+
 typedef struct TransactionList {
-    Transaction *firstTransaction, *lastTransaction;
+    TransactionListNode *firstTransactionListNode, *lastTransactionListNode;
     unsigned int size;
     char* walletId;  // walletId: walletId of wallet that is involved in the transaction list
 } TransactionList;
@@ -47,6 +51,10 @@ Transaction* initTransaction(char* transactionId, int amount, char* senderWallet
 
 void freeTransaction(Transaction** transaction);
 
+TransactionListNode* initTransactionListNode(Transaction* transaction);
+
+void freeTransactionListNodeRec(TransactionListNode** transactionListNode, char shouldFreeTransactions);
+
 TransactionList* initTransactionList(char* walletId);
 
 TransactionList** initTransactionListArray(unsigned int size);
@@ -60,15 +68,15 @@ void freeTransactionList(TransactionList** transactionList, char shoudFreeTransa
 void freeTransactionListArray(TransactionList*** transactionLists, unsigned int size, char shoudFreeTransactions);
 
 // adds transaction by pointer to end of transactionList
-Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction);
+TransactionListNode* addTransactionListNodeToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction);  // add by pointer
 
 // adds transaction by pointer to transactionList by keeping the ascending sorting order of the transactions by timestamp
-Transaction* addTransactionToTransactionListSorted(TransactionList* transactionList, Transaction* transaction);
+TransactionListNode* addTransactionListNodeToTransactionListSorted(TransactionList* transactionList, Transaction* transaction);
 
 // prints transactions of transactionList that have date > date1 && date < date2 && time > time1 && time < time2 (if some values are NULL they are ignored)
 // the printed transactions are in ascending sorting order by timestamp
 // also, it prints the sum of the amount of dollars that are involved in the transactions of the transactionList
-void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings);
+void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings, time_t timestamp1, time_t timestamp2);
 
 // prints transactions of transactionList in ascending sorting order by timestamp
 void printTransactionsOfTransactionListSimple(TransactionList* transactionList);
@@ -119,7 +127,7 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
 
 // searchs serially for a transaction in hash table
 // returns NULL if no transaction was found
-Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId);
+TransactionListNode* findTransactionListNodeInHashTable(HashTable* hashTable, char* transactionId);
 
 // searchs for a transaction list with wallet id walletId in hash table
 // returns NULL if no transaction list was found

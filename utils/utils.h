@@ -101,7 +101,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
 // reads a file that contains transactions and fills senderHashTable and receiverHashTable with valid data
 // lastTransactionTimestamp: the timestamp of the last succesful transaction. This is updated every time that a transaction is succesfully made
 void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
-                            time_t* lastTransactionTimestamp);
+                            time_t* lastTransactionTimestamp, char withTransactionId);
 
 // handles user input until the program is exited with ./exit or the process is killed/interrupted
 // bitcoinList: the main list that contains all bitcoins

@@ -10,7 +10,3 @@
 ./traceCoin 432
 ./bitCoinStatus 432
 ./walletStatus richard
-
-./requestTransaction norvaldach crystalsmith 21 14-13-2027 15:11
-./traceCoin 692
-./bitCoinStatus 692

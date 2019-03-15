@@ -226,7 +226,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     day = strtol(token, &endptr, 10);
     if ((endptr == token) || ((day == LONG_MAX || day == LONG_MIN) && errno == ERANGE) || day <= 0) {
         printError("Invalid date\n");
-        raiseIntAndExit(1);
+        return -1;
     }
     timeStruct.tm_mday = day;
 
@@ -238,7 +238,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     month = strtol(token, &endptr, 10);
     if ((endptr == token) || ((month == LONG_MAX || month == LONG_MIN) && errno == ERANGE) || month <= 0) {
         printError("Invalid date\n");
-        raiseIntAndExit(1);
+        return -1;
     }
     timeStruct.tm_mon = month - 1;  // 0 is January
 
@@ -250,7 +250,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     year = strtol(token, &endptr, 10);
     if ((endptr == token) || ((year == LONG_MAX || year == LONG_MIN) && errno == ERANGE) || year <= 0) {
         printError("Invalid date\n");
-        raiseIntAndExit(1);
+        return -1;
     }
     timeStruct.tm_year = year - 1900;  // - 1900: to comply with struct tm's standard
 
@@ -262,7 +262,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     hour = strtol(token, &endptr, 10);
     if ((endptr == token) || ((hour == LONG_MAX || hour == LONG_MIN) && errno == ERANGE) || hour < 0) {
         printError("Invalid date\n");
-        raiseIntAndExit(1);
+        return -1;
     }
     timeStruct.tm_hour = hour;
 
@@ -274,7 +274,7 @@ time_t datetimeStringToTimeStamp(char* datetimeS) {
     minute = strtol(token, &endptr, 10);
     if ((endptr == token) || ((minute == LONG_MAX || minute == LONG_MIN) && errno == ERANGE) || minute < 0) {
         printError("Invalid date\n");
-        raiseIntAndExit(1);
+        return -1;
     }
     timeStruct.tm_min = minute;
 
@@ -352,8 +352,8 @@ void handleArgs(int argc, char** argv, char** bitcoinBalancesFileName, char** tr
 
     if (strcmp(argv[11], "-b") == 0) {
         (*bucketSizeBytes) = atoi(argv[12]);
-        if ((*bucketSizeBytes) <= 0) {
-            printError("Invalid arguments\nExiting...\n");
+        if ((*bucketSizeBytes) < 8) {
+            printError("Invalid arguments, give a bucketSize value >=8\nExiting...\n");
             raiseIntAndExit(1);
         }
     } else {
@@ -439,7 +439,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
         idS = (char*)malloc(MAX_STRING_INT_SIZE);
         int id = rand();
         sprintf(idS, "%d", id);
-        while (findTransactionInHashTable(senderHashTable, idS) != NULL) {  // while generated transaction id is not unique, generate a different one
+        while (findTransactionListNodeInHashTable(senderHashTable, idS) != NULL) {  // while generated transaction id is not unique, generate a different one
             id = rand();
             sprintf(idS, "%d", id);
         }
@@ -466,6 +466,12 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
         return;
     }
 
+    if (strcmp(senderWalletId, receiverWalletId) == 0) {
+        printError("Invalid transactions string\n");
+        freeString(&idS);
+        return;
+    }
+
     token = strtok(NULL, " ");
     if (token == NULL) {
         printError("Invalid transactions string\n");
@@ -481,7 +487,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
         return;
     }
 
-    token = strtok(NULL, "\n");
+    token = strtok(NULL, "\n;");
     if (token == NULL || strcmp(token, "") == 0) {
         // generate current datetime
         timestampToDatetimeString(time(NULL), &dateTimeS);
@@ -512,7 +518,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
 
     if (withTransactionId == 1) {  // only if we are using the given transaction id
         // see if transaction already exists
-        if (findTransactionInHashTable(senderHashTable, transactionId) != NULL) {
+        if (findTransactionListNodeInHashTable(senderHashTable, transactionId) != NULL) {
             printError("Duplicate transaction id\n");
             freeString(&idS);
             return;
@@ -556,7 +562,7 @@ void handleTransactionString(char* transactionS, WalletList* walletList, HashTab
 }
 
 void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTable* receiverHashTable, BitcoinList* bitcoinList, WalletList* walletList,
-                            time_t* lastTransactionTimestamp) {
+                            time_t* lastTransactionTimestamp, char withTransactionId) {
     char line[MAX_FILE_LINE_SIZE];
     FILE* fileP;
 
@@ -568,7 +574,7 @@ void handleTransactionsFile(char* fileName, HashTable* senderHashTable, HashTabl
 
     // handle each line of transactions' file
     while (fgets(line, MAX_FILE_LINE_SIZE, fileP) != NULL) {
-        handleTransactionString(strtok(line, "\n;"), walletList, senderHashTable, receiverHashTable, 1, lastTransactionTimestamp);
+        handleTransactionString(strtok(line, "\n;"), walletList, senderHashTable, receiverHashTable, withTransactionId, lastTransactionTimestamp);
     }
 
     fclose(fileP);
@@ -608,7 +614,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                     if (tToken == NULL) {  // filename is given as input
                         token = strtok(inputSCopy, " ");
                         token = strtok(NULL, "\n");  // input file name
-                        handleTransactionsFile(token, senderHashTable, receiverHashTable, bitcoinList, walletList, lastTransactionTimestamp);
+                        handleTransactionsFile(token, senderHashTable, receiverHashTable, bitcoinList, walletList, lastTransactionTimestamp, 0);
                     } else {  // transaction strings are given as input
                         char* rest = inputSCopy;
                         token = strtok_r(rest, " ", &rest);
@@ -639,7 +645,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                     token = strtok(NULL, " ");
                     if (token == NULL) {  // no time and date is given as input
                         // print all found transactions sorted by timestamp and print sum bitcoin amount
-                        printTransactionsFromTransactionList(foundTransactionList, NULL, NULL, NULL, NULL, findEarnings);
+                        printTransactionsFromTransactionList(foundTransactionList, NULL, NULL, NULL, NULL, findEarnings, -1, -1);
                     } else {
                         token = strtok(NULL, " ");
                         if (token == NULL) {
@@ -664,7 +670,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                                                 printError("date1 must be less than or equal with date2, try again\n");
                                             } else {
                                                 // print transaction with date1S < date < date2S sorted by timestamp and print sum bitcoin amount
-                                                printTransactionsFromTransactionList(foundTransactionList, NULL, date1S, NULL, date2S, findEarnings);
+                                                printTransactionsFromTransactionList(foundTransactionList, NULL, date1S, NULL, date2S, findEarnings, -1, -1);
                                             }
                                         }
                                     }
@@ -677,7 +683,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                                             printError("time1 must be less than or equal with time2, try again\n");
                                         } else {
                                             // print transaction with time1S < time < time2S sorted by timestamp and print sum bitcoin amount
-                                            printTransactionsFromTransactionList(foundTransactionList, time1S, NULL, time2S, NULL, findEarnings);
+                                            printTransactionsFromTransactionList(foundTransactionList, time1S, NULL, time2S, NULL, findEarnings, -1, -1);
                                         }
                                     }
                                 }
@@ -706,15 +712,23 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                                                 if (validateDateS(date2S) == -1) {
                                                     printError("Invalid input, try again\n");
                                                 } else {  // all values are valid
-                                                    if (compareTimesS(time1S, time2S) > 0) {
-                                                        printError("time1 must be less than or equal with time2, try again\n");
+                                                    if ((compareTimesS(time1S, time2S) <= 0 && compareDatesS(date1S, date2S) <= 0) ||
+                                                        (compareTimesS(time1S, time2S) >= 0 && compareDatesS(date1S, date2S) <= 0)) {
+                                                        char tempDatetime1S[MAX_DATETIME_SIZE], tempDatetime2S[MAX_DATETIME_SIZE];
+                                                        time_t timestamp1, timestamp2;
+                                                        strcpy(tempDatetime1S, date1S);
+                                                        strcat(tempDatetime1S, " ");
+                                                        strcat(tempDatetime1S, time1S);
+                                                        timestamp1 = datetimeStringToTimeStamp(tempDatetime1S);
+
+                                                        strcpy(tempDatetime2S, date2S);
+                                                        strcat(tempDatetime2S, " ");
+                                                        strcat(tempDatetime2S, time2S);
+                                                        timestamp2 = datetimeStringToTimeStamp(tempDatetime2S);
+                                                        // print transaction with time1S < time < time2S and date1S < date < date2S sorted by timestamp and print sum bitcoin amount
+                                                        printTransactionsFromTransactionList(foundTransactionList, NULL, NULL, NULL, NULL, findEarnings, timestamp1, timestamp2);
                                                     } else {
-                                                        if (compareDatesS(date1S, date2S) > 0) {
-                                                            printError("date1 must be less than or equal with date2, try again\n");
-                                                        } else {
-                                                            // print transaction with time1S < time < time2S and date1S < date < date2S sorted by timestamp and print sum bitcoin amount
-                                                            printTransactionsFromTransactionList(foundTransactionList, time1S, date1S, time2S, date2S, findEarnings);
-                                                        }
+                                                        printError("time1 and date2 must be less than or equal with time2 and date2, try again\n");
                                                     }
                                                 }
                                             }
@@ -784,7 +798,7 @@ void handleInput(WalletList* walletList, HashTable* senderHashTable, HashTable* 
                         printTransactionsOfTransactionListSimple(tempTransactionList);
                     }
                     // free transactions list and transactions
-                    freeTransactionList(&tempTransactionList, 1);
+                    freeTransactionList(&tempTransactionList, 0);
                 }
             }
 

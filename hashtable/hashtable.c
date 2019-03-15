@@ -20,8 +20,6 @@ Transaction* initTransaction(char* transactionId, int amount, char* senderWallet
 
     transaction->timestamp = datetimeStringToTimeStamp(datetimeS);
 
-    transaction->nextTransaction = NULL;
-
     return transaction;
 }
 
@@ -29,8 +27,11 @@ void freeTransaction(Transaction** transaction) {
     if ((*transaction) == NULL)
         return;
 
-    free((*transaction)->transactionId);
-    (*transaction)->transactionId = NULL;
+    if ((*transaction)->transactionId != NULL && strcmp((*transaction)->transactionId, "")) {
+        free((*transaction)->transactionId);
+        (*transaction)->transactionId = NULL;
+    }
+
     free((*transaction)->senderWalletId);
     (*transaction)->senderWalletId = NULL;
     free((*transaction)->receiverWalletId);
@@ -44,19 +45,33 @@ void freeTransaction(Transaction** transaction) {
     return;
 }
 
-void freeTransactionRec(Transaction** transaction) {
-    if ((*transaction) == NULL)
-        return;
-
-    freeTransactionRec(&((*transaction)->nextTransaction));
-
-    freeTransaction(transaction);
-    return;
-}
-
 //////////////////////////////////////////////////////////////////////////////// END OF TRANSACTION ///////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////// START OF TRANSACTION LIST ///////////////////////////////////////////////////////////////
+
+TransactionListNode* initTransactionListNode(Transaction* transaction) {
+    TransactionListNode* transactionListNode = (TransactionListNode*)malloc(sizeof(TransactionListNode));
+    transactionListNode->transaction = transaction;
+    transactionListNode->nextTransactionListNode = NULL;
+
+    return transactionListNode;
+}
+
+void freeTransactionListNodeRec(TransactionListNode** transactionListNode, char shouldFreeTransactions) {
+    if ((*transactionListNode) == NULL)
+        return;
+
+    freeTransactionListNodeRec(&(*transactionListNode)->nextTransactionListNode, shouldFreeTransactions);
+
+    if (shouldFreeTransactions == 1) {
+        freeTransaction(&(*transactionListNode)->transaction);
+    }
+
+    free(*transactionListNode);
+    (*transactionListNode) = NULL;
+
+    return;
+}
 
 TransactionList* initTransactionList(char* walletId) {
     TransactionList* transactionList = (TransactionList*)malloc(sizeof(TransactionList));
@@ -68,8 +83,8 @@ TransactionList* initTransactionList(char* walletId) {
     }
     transactionList->size = 0;
 
-    transactionList->firstTransaction = NULL;
-    transactionList->lastTransaction = NULL;
+    transactionList->firstTransactionListNode = NULL;
+    transactionList->lastTransactionListNode = NULL;
 
     return transactionList;
 }
@@ -88,9 +103,7 @@ void freeTransactionList(TransactionList** transactionList, char shoudFreeTransa
     if ((*transactionList) == NULL)
         return;
 
-    if (shoudFreeTransactions == 1) {
-        freeTransactionRec(&(*transactionList)->firstTransaction);
-    }
+    freeTransactionListNodeRec(&(*transactionList)->firstTransactionListNode, shoudFreeTransactions);
 
     free((*transactionList)->walletId);
     (*transactionList)->walletId = NULL;
@@ -117,120 +130,119 @@ void freeTransactionListArray(TransactionList*** transactionLists, unsigned int 
     return;
 }
 
-Transaction* addTransactionToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction) {  // add by pointer
+TransactionListNode* addTransactionListNodeToEndOfTransactionList(TransactionList* transactionList, Transaction* transaction) {  // add by pointer
     if (transactionList->size == 0) {
-        transactionList->firstTransaction = transaction;
-        transactionList->lastTransaction = transactionList->firstTransaction;
+        transactionList->firstTransactionListNode = initTransactionListNode(transaction);
+        transactionList->lastTransactionListNode = transactionList->firstTransactionListNode;
         transactionList->size++;
-        return transactionList->firstTransaction;
+        return transactionList->firstTransactionListNode;
     } else {
-        transactionList->lastTransaction->nextTransaction = transaction;
-        transactionList->lastTransaction = transactionList->lastTransaction->nextTransaction;
+        transactionList->lastTransactionListNode->nextTransactionListNode = initTransactionListNode(transaction);
+        transactionList->lastTransactionListNode = transactionList->lastTransactionListNode->nextTransactionListNode;
         transactionList->size++;
-        return transactionList->lastTransaction;
+        return transactionList->lastTransactionListNode;
     }
 
     return NULL;  // not normal behavior
 }
 
-Transaction* addTransactionToTransactionListSorted(TransactionList* transactionList, Transaction* transaction) {
+TransactionListNode* addTransactionListNodeToTransactionListSorted(TransactionList* transactionList, Transaction* transaction) {
     if (transactionList->size == 0) {
-        transactionList->firstTransaction = transaction;
-        transactionList->lastTransaction = transactionList->firstTransaction;
+        transactionList->firstTransactionListNode = initTransactionListNode(transaction);
+        transactionList->lastTransactionListNode = transactionList->firstTransactionListNode;
 
         transactionList->size++;
         printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
-        return transactionList->firstTransaction;
+        return transactionList->firstTransactionListNode;
     } else {
-        Transaction* curTransaction = transactionList->firstTransaction;
+        TransactionListNode* curTransactionListNode = transactionList->firstTransactionListNode;
 
-        if (transaction->timestamp < curTransaction->timestamp) {
+        if (transaction->timestamp < curTransactionListNode->transaction->timestamp) {
             // insert at start
-            Transaction* transactionToInsert = transaction;
-            transactionToInsert->nextTransaction = curTransaction;
+            TransactionListNode* transactionListNodeToInsert = initTransactionListNode(transaction);
+            transactionListNodeToInsert->nextTransactionListNode = curTransactionListNode;
 
-            transactionList->firstTransaction = transactionToInsert;
+            transactionList->firstTransactionListNode = transactionListNodeToInsert;
             transactionList->size++;
             printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
-            return transactionList->firstTransaction;
+            return transactionList->firstTransactionListNode;
         }
-        while (curTransaction != NULL) {
-            if (curTransaction->nextTransaction != NULL) {
-                if (transaction->timestamp < curTransaction->nextTransaction->timestamp) {
-                    Transaction* transactionToInsert = transaction;
-                    transactionToInsert->nextTransaction = curTransaction->nextTransaction;
+        while (curTransactionListNode != NULL) {
+            if (curTransactionListNode->nextTransactionListNode != NULL) {
+                if (transaction->timestamp < curTransactionListNode->nextTransactionListNode->transaction->timestamp) {
+                    TransactionListNode* transactionListNodeToInsert = initTransactionListNode(transaction);
+                    transactionListNodeToInsert->nextTransactionListNode = curTransactionListNode->nextTransactionListNode;
 
-                    curTransaction->nextTransaction = transactionToInsert;
+                    curTransactionListNode->nextTransactionListNode = transactionListNodeToInsert;
                     transactionList->size++;
                     printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
-                    return curTransaction->nextTransaction;
-                } else if (transaction->timestamp == curTransaction->nextTransaction->timestamp &&
-                           strcmp(transaction->transactionId, curTransaction->nextTransaction->transactionId) == 0) {  // we don't want duplicates
-                    freeTransaction(&transaction);
+                    return curTransactionListNode->nextTransactionListNode;
+                } else if (transaction->timestamp == curTransactionListNode->nextTransactionListNode->transaction->timestamp &&
+                           strcmp(transaction->transactionId, curTransactionListNode->nextTransactionListNode->transaction->transactionId) == 0) {  // we don't want duplicates
                     return NULL;
                 }
             } else {
                 // insert at the end
-                curTransaction->nextTransaction = transaction;
-                transactionList->lastTransaction = curTransaction->nextTransaction;
+                curTransactionListNode->nextTransactionListNode = initTransactionListNode(transaction);
+                transactionList->lastTransactionListNode = curTransactionListNode->nextTransactionListNode;
 
                 transactionList->size++;
                 printf("Inserted transaction with id %s to sorted TransactionList\n", transaction->transactionId);
-                return curTransaction->nextTransaction;
+                return curTransactionListNode->nextTransactionListNode;
             }
 
-            curTransaction = curTransaction->nextTransaction;
+            curTransactionListNode = curTransactionListNode->nextTransactionListNode;
         }
     }
 
     return NULL;  // not normal behavior
 }
 
-void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings) {
+void printTransactionsFromTransactionList(TransactionList* transactionList, char* time1, char* date1, char* time2, char* date2, char findEarnings, time_t timestamp1, time_t timestamp2) {
     // create a temporary transaction list to print transactions in ascending sorting order by timestamp
     TransactionList* tempTransactionList = initTransactionList(NULL);
     int amountSum = 0;
 
-    Transaction* curTransaction = transactionList->firstTransaction;
-    while (curTransaction != NULL) {
+    TransactionListNode* curTransactionListNode = transactionList->firstTransactionListNode;
+    while (curTransactionListNode != NULL) {
         char *timeS, *dateS, datetimeSCopy[MAX_DATETIME_SIZE];
-        strcpy(datetimeSCopy, curTransaction->datetimeS);
+        strcpy(datetimeSCopy, curTransactionListNode->transaction->datetimeS);
         dateS = strtok(datetimeSCopy, " ");
         timeS = strtok(NULL, " ");
-        if ((time1 == NULL && date1 == NULL && time2 == NULL && date2 == NULL) ||
-            ((time1 != NULL && date1 != NULL && time2 != NULL && date2 != NULL) && compareDatesS(dateS, date1) >= 0 && compareDatesS(dateS, date2) <= 0 && compareTimesS(timeS, time1) >= 0 && compareTimesS(timeS, time2) <= 0) ||
+        if ((time1 == NULL && date1 == NULL && time2 == NULL && date2 == NULL && timestamp1 == -1) ||
+            (time1 == NULL && date1 == NULL && time2 == NULL && date2 == NULL && timestamp1 != -1 && timestamp2 != -1 && curTransactionListNode->transaction->timestamp >= timestamp1 && curTransactionListNode->transaction->timestamp <= timestamp2) ||
             ((time1 != NULL && date1 == NULL && time2 != NULL && date2 == NULL) && compareTimesS(timeS, time1) >= 0 && compareTimesS(timeS, time2) <= 0) ||
             ((time1 == NULL && date1 != NULL && time2 == NULL && date2 != NULL) && compareDatesS(dateS, date1) >= 0 && compareDatesS(dateS, date2) <= 0)) {
-            addTransactionToTransactionListSorted(tempTransactionList, initTransaction(curTransaction->transactionId, curTransaction->amount, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->datetimeS));
-            amountSum += curTransaction->amount;
+            addTransactionListNodeToTransactionListSorted(tempTransactionList, curTransactionListNode->transaction);
+            amountSum += curTransactionListNode->transaction->amount;
         }
-        curTransaction = curTransaction->nextTransaction;
+        curTransactionListNode = curTransactionListNode->nextTransactionListNode;
     }
 
     if (tempTransactionList->size == 0) {
         printf("No transactions found\n");
-        freeTransactionList(&tempTransactionList, 1);
+        freeTransactionList(&tempTransactionList, 0);
         return;
     }
 
     printf(ANSI_COLOR_YELLOW "\nResults:" ANSI_COLOR_RESET "\nAmount of dollars %s: %d\n", findEarnings == 1 ? "earned" : "paid", amountSum);
-    curTransaction = tempTransactionList->firstTransaction;
-    while (curTransaction != NULL) {
-        printf("%s %s %s %d %s\n", curTransaction->transactionId, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->amount, curTransaction->datetimeS);
-        curTransaction = curTransaction->nextTransaction;
+    curTransactionListNode = tempTransactionList->firstTransactionListNode;
+    while (curTransactionListNode != NULL) {
+        printf("%s %s %s %d %s\n", curTransactionListNode->transaction->transactionId, curTransactionListNode->transaction->senderWalletId, curTransactionListNode->transaction->receiverWalletId, curTransactionListNode->transaction->amount, curTransactionListNode->transaction->datetimeS);
+        curTransactionListNode = curTransactionListNode->nextTransactionListNode;
     }
 
-    freeTransactionList(&tempTransactionList, 1);
+    freeTransactionList(&tempTransactionList, 0);
 
     return;
 }
 
 void printTransactionsOfTransactionListSimple(TransactionList* transactionList) {
-    Transaction* curTransaction = transactionList->firstTransaction;
+    TransactionListNode* curTransactionListNode = transactionList->firstTransactionListNode;
     printf(ANSI_COLOR_YELLOW "\nResults:\n" ANSI_COLOR_RESET);
-    while (curTransaction != NULL) {
-        printf("%s %s %s %d %s\n", curTransaction->transactionId, curTransaction->senderWalletId, curTransaction->receiverWalletId, curTransaction->amount, curTransaction->datetimeS);
-        curTransaction = curTransaction->nextTransaction;
+    while (curTransactionListNode != NULL) {
+        printf("%s %s %s %d %s\n", curTransactionListNode->transaction->transactionId, curTransactionListNode->transaction->senderWalletId, curTransactionListNode->transaction->receiverWalletId, curTransactionListNode->transaction->amount, curTransactionListNode->transaction->datetimeS);
+        curTransactionListNode = curTransactionListNode->nextTransactionListNode;
     }
 
     return;
@@ -389,9 +401,14 @@ void freeHashTable(HashTable** hashTable, char shoudFreeTransactions) {
 unsigned int hashFunction(HashTable* hashTable, char* walletId) {
     unsigned long hash = 5381;
     int c;
-
-    while ((c = *(walletId++)))
+    // char* tempWalletId = malloc(strlen(walletId) + 1);
+    // strcpy(tempWalletId, walletId);
+    for (int i = 0; i < strlen(walletId); i++) {
+        c = walletId[i];
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    }
+
+    // free(tempWalletId);
 
     return hash % hashTable->bucketListArraySize;
 }
@@ -407,7 +424,7 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
     TransactionList* foundTransactionList = NULL;
     if (hashTable->bucketLists[index] == NULL) {
         // create new bucket list and bucket
-        hashTable->bucketLists[index] = initBucketList(transaction->senderWalletId);
+        hashTable->bucketLists[index] = initBucketList();
         addBucketToEndOfBucketList(hashTable->bucketLists[index], hashTable->bucketSize);
     } else {
         // search for existing transaction list
@@ -422,6 +439,7 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
             lastBucket = addBucketToEndOfBucketList(hashTable->bucketLists[index], hashTable->bucketSize);
         }
 
+        printf("index: %d\n", lastBucket->nextIndex);
         // create new transaction list to last bucket of bucket list
         lastBucket->transactionLists[lastBucket->nextIndex] = initTransactionList(getWalletIdByHashTableType(transaction, hashTableType));
         foundTransactionList = lastBucket->transactionLists[lastBucket->nextIndex];
@@ -430,13 +448,13 @@ Transaction* insertTransactionToHashTable(HashTable* hashTable, Transaction* tra
     }
 
     // add transaction to the current transaction list
-    Transaction* insertedTransaction = addTransactionToEndOfTransactionList(foundTransactionList, transaction);
+    Transaction* insertedTransaction = addTransactionListNodeToEndOfTransactionList(foundTransactionList, transaction)->transaction;
     printf(ANSI_COLOR_CYAN "Inserted transaction with id %s to %s HashTable\n" ANSI_COLOR_RESET, transaction->transactionId, hashTableType == RECEIVER ? "receiver" : "sender");
 
     return insertedTransaction;
 }
 
-Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionId) {
+TransactionListNode* findTransactionListNodeInHashTable(HashTable* hashTable, char* transactionId) {
     for (int i = 0; i < hashTable->bucketListArraySize; i++) {
         BucketList* curBucketList = hashTable->bucketLists[i];
         if (curBucketList == NULL)
@@ -447,12 +465,12 @@ Transaction* findTransactionInHashTable(HashTable* hashTable, char* transactionI
             for (int j = 0; j < curBucket->nextIndex; j++) {
                 TransactionList* curTransactionList = curBucket->transactionLists[j];
 
-                Transaction* curTransaction = curTransactionList->firstTransaction;
-                while (curTransaction != NULL) {
-                    if (strcmp(curTransaction->transactionId, transactionId) == 0) {
-                        return curTransaction;
+                TransactionListNode* curTransactionListNode = curTransactionList->firstTransactionListNode;
+                while (curTransactionListNode != NULL) {
+                    if (strcmp(curTransactionListNode->transaction->transactionId, transactionId) == 0) {
+                        return curTransactionListNode;
                     }
-                    curTransaction = curTransaction->nextTransaction;
+                    curTransactionListNode = curTransactionListNode->nextTransactionListNode;
                 }
             }
             curBucket = curBucket->nextBucket;

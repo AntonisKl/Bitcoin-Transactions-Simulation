@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
     handleBitcoinBalancesFile(bitcoinBalancesFileName, walletList, bitcoinList, bitcoinValue);
 
-    handleTransactionsFile(transactionsFileName, senderHashTable, receiverHashTable, bitcoinList, walletList, &lastTransactionTimestamp);
+    handleTransactionsFile(transactionsFileName, senderHashTable, receiverHashTable, bitcoinList, walletList, &lastTransactionTimestamp, 1);
 
     handleInput(walletList, senderHashTable, receiverHashTable, bitcoinList, &lastTransactionTimestamp);
 
